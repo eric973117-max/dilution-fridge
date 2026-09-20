@@ -1,0 +1,20 @@
+/* ==========================================================================
+   DILUTION REFRIGERATOR · blueprint system
+   tokens → fx → hud → panels → cards → overlays → docmode → responsive → scene
+
+   这份文件现在只是入口清单：每一块样式都在 styles/ 下单独一个文件。
+   改配色去 tokens.css，改卡片去 cards.css，改断点去 responsive.css。
+   @import 的顺序就是层叠顺序，和拆分前完全一致。
+   ========================================================================== */
+
+/* 改动样式后把版本号 +1（或换成日期）—— 浏览器会当成新 URL 重新取，
+   避免"明明改了、刷新还是旧样式"这类缓存问题。 */
+@import url('./styles/tokens.css?v=20260920c');
+@import url('./styles/fx.css?v=20260920c');
+@import url('./styles/hud.css?v=20260920c');
+@import url('./styles/panels.css?v=20260920c');
+@import url('./styles/cards.css?v=20260920c');
+@import url('./styles/overlays.css?v=20260920c');
+@import url('./styles/docmode.css?v=20260920c');
+@import url('./styles/responsive.css?v=20260920c');
+@import url('./styles/scene.css?v=20260920c');

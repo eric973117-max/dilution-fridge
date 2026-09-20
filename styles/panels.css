@@ -1,0 +1,107 @@
+/* ==========================================================================
+   panels · 规格面板 / 段位导航轨
+   —— 从 styles.css 按原分节拆出，选择器与声明逐字未改。
+   ========================================================================== */
+/* ------------------------------------------------------------ spec panel */
+
+.spec {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .1em;
+  color: var(--ink-50);
+  min-width: 300px;
+  opacity: 0;
+  transition: opacity .5s var(--ease);
+}
+
+.spec.is-on { opacity: 1; }
+
+.spec__title {
+  font-size: 13px;
+  letter-spacing: .22em;
+  color: var(--ink-100);
+  margin-bottom: 10px;
+}
+
+.spec__row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  padding: 5px 0;
+  border-top: 1px solid rgba(255, 255, 255, .07);
+}
+
+.spec__row b { color: var(--ink-100); font-weight: 500; }
+.spec__row span { color: var(--ink-30); }
+
+/* -------------------------------------------------------------- segment rail */
+
+.rail {
+  position: fixed;
+  right: calc(var(--pad-x) - 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 11;
+  width: var(--rail-w);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  opacity: 0;
+  transition: opacity .6s var(--ease);
+}
+
+.rail.is-on { opacity: 1; }
+
+.rail__item {
+  pointer-events: auto;
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 0 7px 10px;
+  background: none;
+  border: 0;
+  border-left: 1px solid var(--ink-15);
+  color: var(--ink-30);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .12em;
+  text-align: left;
+  cursor: pointer;
+  transition: color .35s var(--ease), border-color .35s var(--ease), padding .35s var(--ease);
+}
+
+.rail__item i {
+  font-style: normal;
+  color: inherit;
+}
+
+.rail__item em {
+  font-style: normal;
+  font-size: 8.5px;
+  color: var(--ink-30);
+  opacity: .7;
+  white-space: nowrap;
+}
+
+.rail__item-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.rail__item:hover { color: var(--ink-70); }
+
+.rail__item.is-active {
+  color: var(--ink-100);
+  border-left-color: var(--accent-hi);
+  padding-left: 14px;
+}
+
+.rail__item.is-active i { color: var(--seg, var(--accent-hi)); }
+
+.rail__item.is-core .rail__item-name::after {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-left: 6px;
+  background: var(--accent);
+  transform: translateY(-1px) rotate(45deg);
+}

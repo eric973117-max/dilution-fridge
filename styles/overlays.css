@@ -1,0 +1,449 @@
+/* ==========================================================================
+   overlays · 开机 / 依赖图 / 链路 / 剖面 / 总表 / 错误框
+   —— 从 styles.css 按原分节拆出，选择器与声明逐字未改。
+   ========================================================================== */
+/* ------------------------------------------------------------- overlays */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 12;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .55s var(--ease);
+}
+
+.overlay.is-on { opacity: 1; }
+
+/* boot */
+
+.overlay--boot {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0 var(--pad-x) 128px;
+}
+
+.boot {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .16em;
+  line-height: 2.05;
+  color: var(--ink-50);
+  margin-bottom: 46px;
+}
+
+.boot__line { opacity: 0; transform: translateY(6px); }
+.boot__line.is-on { opacity: 1; transform: none; }
+.boot__line i { font-style: normal; color: var(--ink-30); }
+.boot__line b { color: var(--ink-100); font-weight: 500; }
+
+.stack__en {
+  font-family: var(--mono);
+  font-size: clamp(18px, 2.4vw, 34px);
+  letter-spacing: .3em;
+  color: var(--ink-100);
+}
+
+.stack__zh {
+  margin-top: 12px;
+  font-size: 14px;
+  letter-spacing: .08em;
+  color: var(--ink-50);
+}
+
+/* dependency graph */
+
+/* 依赖图 dock 在右下角 —— 它是一张"读"的图，放在角上不压机器主体，
+   机器则由机位挪到左半边（main.js 的 camPerScene.deps.tx），两者各占一角。
+   下边距留 96px：让开页脚那条场景名 / 进度条。 */
+.overlay--graph {
+  display: grid;
+  place-items: center start;
+  padding: 0 0 0 var(--pad-x);
+}
+
+.graph { width: min(660px, 42vw); }
+.graph svg { width: 100%; height: auto; overflow: visible; }
+
+.graph .edge {
+  fill: none;
+  stroke: var(--accent-hi);
+  stroke-width: 1;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset .75s var(--ease);
+}
+
+.graph .edge.is-drawn { stroke-dashoffset: 0; }
+.graph .edge--support { stroke: var(--ink-30); stroke-dasharray: 1; }
+.graph .edge--shield { stroke: var(--shield); stroke-dasharray: 1; }
+.graph .edge--cooling { stroke: var(--accent-hi); }
+.graph .edge--signal { stroke: var(--accent); }
+
+.graph .node rect {
+  fill: rgba(8, 10, 20, .82);
+  stroke: var(--ink-30);
+  stroke-width: 1;
+  opacity: 0;
+  transition: opacity .5s var(--ease), stroke .4s var(--ease);
+}
+
+.graph .node.is-on rect { opacity: 1; }
+.graph .node:hover rect { stroke: var(--accent-hi); }
+.graph .node--core rect { stroke: var(--accent); }
+
+.graph .node text {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .14em;
+  fill: var(--ink-100);
+  opacity: 0;
+  transition: opacity .5s var(--ease);
+}
+
+.graph .node.is-on text { opacity: 1; }
+.graph .node .zh {
+  font-family: var(--cjk);
+  font-size: 11px;
+  letter-spacing: .04em;
+  fill: var(--ink-50);
+}
+
+.graph .node .note {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .16em;
+  fill: var(--ink-30);
+}
+
+.graph__caption {
+  margin-top: 26px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .22em;
+  color: var(--ink-30);
+}
+
+.graph__legend {
+  display: flex;
+  gap: 26px;
+  justify-content: center;
+  margin-top: 18px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .14em;
+  color: var(--ink-30);
+}
+
+.graph__legend i { font-style: normal; display: inline-flex; align-items: center; gap: 7px; }
+.graph__legend i::before { content: ""; width: 18px; height: 1px; background: currentColor; }
+.graph__legend i.l-support::before { background: var(--ink-30); }
+.graph__legend i.l-cooling::before { background: var(--accent-hi); }
+.graph__legend i.l-signal::before { background: var(--accent); }
+.graph__legend i.l-shield::before { background: var(--shield); }
+
+/* signal trace hud */
+
+.overlay--signal { display: flex; align-items: flex-end; justify-content: center; padding-bottom: 96px; }
+
+/* x-ray section hud */
+
+.overlay--xray { display: flex; align-items: flex-end; justify-content: center; padding-bottom: 96px; }
+
+.xray-hud { text-align: center; }
+
+.xray-hud__en {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .28em;
+  color: var(--ink-50);
+}
+
+.xray-hud__zh {
+  margin-top: 8px;
+  font-size: 15px;
+  letter-spacing: .06em;
+  color: var(--ink-100);
+}
+
+.signal-hud { text-align: center; }
+
+.signal-hud__en {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .28em;
+  color: var(--ink-50);
+}
+
+.signal-hud__zh {
+  margin-top: 8px;
+  font-size: 15px;
+  letter-spacing: .06em;
+  color: var(--ink-100);
+}
+
+.signal-hud__nodes {
+  display: flex;
+  gap: 22px;
+  justify-content: center;
+  list-style: none;
+  margin: 22px 0 0;
+  padding: 0;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .12em;
+  color: var(--ink-30);
+}
+
+.signal-hud__nodes li {
+  padding-top: 9px;
+  border-top: 1px solid var(--ink-15);
+  transition: color .3s var(--ease), border-color .3s var(--ease);
+}
+
+.signal-hud__nodes li.is-on { color: var(--ink-100); border-top-color: var(--accent-hi); }
+
+/* shielding stack hud —— 结尾"逐层套罩"那五层 */
+
+/* "隐藏说明"按钮：只在窄屏 + 最后两章出现（样式在 responsive.css） */
+.ui-toggle { display: none; }
+
+.overlay--shields { display: grid; place-items: center end; padding-right: 56px; }
+
+.shields-hud { text-align: right; }
+
+.shields-hud__en {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .28em;
+  color: var(--ink-50);
+}
+
+.shields-hud__zh {
+  margin-top: 8px;
+  font-size: 15px;
+  letter-spacing: .06em;
+  color: var(--ink-100);
+}
+
+.shields-hud__nodes {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+  list-style: none;
+  margin: 22px 0 0;
+  padding: 0;
+  text-align: left;
+}
+
+.shields-hud__nodes li {
+  width: 306px;
+  padding-top: 9px;
+  border-top: 1px solid var(--ink-15);
+  font-family: var(--mono);
+  color: var(--ink-30);
+  transition: color .35s var(--ease), border-color .35s var(--ease);
+}
+
+.shields-hud__nodes li i {
+  font-style: normal;
+  font-size: 9px;
+  letter-spacing: .18em;
+  opacity: .75;
+}
+
+.shields-hud__nodes li b {
+  display: block;
+  margin-top: 5px;
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: .05em;
+  color: var(--ink-70);
+  transition: color .35s var(--ease);
+}
+
+.shields-hud__nodes li em {
+  display: block;
+  margin-top: 4px;
+  font-style: normal;
+  font-size: 8.5px;
+  line-height: 1.5;
+  letter-spacing: .1em;
+}
+
+.shields-hud__nodes li p {
+  margin: 8px 0 0;
+  font-family: var(--cjk);
+  font-size: 11.5px;
+  line-height: 1.65;
+  letter-spacing: .02em;
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: opacity .35s var(--ease), max-height .45s var(--ease);
+}
+
+.shields-hud__nodes li.is-on { color: var(--ink-100); border-top-color: var(--accent-hi); }
+.shields-hud__nodes li.is-on b { color: var(--ink-100); }
+.shields-hud__nodes li.is-on p { opacity: 1; max-height: 120px; }
+
+/* 冷盘标签 —— 前面各章挂在六块平台旁边的名牌 */
+
+.plates {
+  position: fixed;
+  inset: 0;
+  z-index: 13;
+  pointer-events: none;
+}
+
+.plate-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  opacity: 0;
+  transition: opacity .35s var(--ease);
+}
+
+.plate-label.is-on { opacity: 1; }
+
+.plate-label__dot {
+  width: 7px;
+  height: 7px;
+  margin-top: 6px;
+  flex: 0 0 auto;
+  border: 1px solid var(--accent-hi);
+  border-radius: 50%;
+  background: rgba(255, 178, 122, .22);
+}
+
+.plate-label__body {
+  max-width: 216px;
+  padding: 6px 10px 7px;
+  background: rgba(37, 36, 35, .74);
+  border-left: 1px solid var(--accent-hi);
+}
+
+.plate-label__name {
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: .04em;
+  color: var(--ink-100);
+}
+
+.plate-label__meta {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--mono);
+  font-style: normal;
+  font-size: 9px;
+  letter-spacing: .12em;
+  color: var(--ink-50);
+}
+
+.plate-label__note {
+  display: block;
+  margin-top: 5px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--ink-70);
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: opacity .3s var(--ease), max-height .4s var(--ease);
+}
+
+/* 一次讲一块：当前那块展开说明，其余只留名字 */
+.plate-label.is-focus .plate-label__note { max-height: 104px; opacity: 1; }
+.plate-label.is-min .plate-label__meta { display: none; }
+.plate-label.is-min .plate-label__body { padding: 4px 9px 5px; }
+.plate-label.is-min .plate-label__name { font-size: 11.5px; color: var(--ink-70); }
+.plate-label.is-min .plate-label__dot { border-color: var(--ink-30); background: transparent; }
+
+/* 卡片在右侧时，标签整体镜像到左边，圆点仍然贴着盘边 */
+.plate-label.is-left { flex-direction: row-reverse; text-align: right; }
+.plate-label.is-left .plate-label__body {
+  border-left: 0;
+  border-right: 1px solid var(--accent-hi);
+}
+
+/* final spec table
+   outro 章：宽屏下表格行不出现 —— 8 个功能段改成两侧引线标注（leaders.js），
+   这里只剩左上角的图纸标题与整机总述，模型在中间不被遮挡。 */
+
+.overlay--table { display: flex; align-items: flex-start; justify-content: flex-start; padding: 76px 0 0 72px; }
+
+.table {
+  width: min(560px, 44vw);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .06em;
+}
+
+.table__title {
+  font-size: 13px;
+  letter-spacing: .24em;
+  color: var(--ink-100);
+  margin-bottom: 10px;
+}
+
+/* 合体章与总表章共用这块角落信息：标题按章切换 */
+.table__title .t-sheet { display: none; }
+.overlay--table[data-mode="outro"] .table__title .t-sheet { display: inline; }
+.overlay--table[data-mode="outro"] .table__title .t-assembly { display: none; }
+.overlay--table[data-mode="hold"] .table__title .t-sheet,
+.overlay--table[data-mode="shields"] .table__title .t-sheet { display: inline; }
+.overlay--table[data-mode="hold"] .table__title .t-assembly,
+.overlay--table[data-mode="shields"] .table__title .t-assembly { display: none; }
+
+.table__summary {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .05em;
+  line-height: 1.6;
+  color: var(--ink-70);
+  margin-bottom: 16px;
+}
+
+/* 宽屏用两侧引线标注，表格行只在窄屏（引线关闭）里显示 */
+@media (min-width: 901px) {
+  .table__rows { display: none; }
+  /* 角落那块信息不再用整幅底衬，贴着文字留一点柔光，别压到模型上 */
+  .overlay--table .scrim--band::before { inset: -20px -26px; }
+}
+
+.table__row {
+  display: grid;
+  grid-template-columns: 52px 1.4fr 1.1fr 1fr 1.1fr;
+  gap: 16px;
+  padding: 10px 0;
+  border-top: 1px solid rgba(255, 255, 255, .08);
+  color: var(--ink-70);
+}
+
+.table__row.head { color: var(--ink-50); border-top-color: var(--ink-30); }
+.table__row b { color: var(--ink-100); font-weight: 500; }
+.table__row .zh { font-family: var(--cjk); font-size: 12px; color: var(--ink-70); letter-spacing: .02em; }
+
+/* ------------------------------------------------------------- tutorial */
+
+.errbox {
+  position: fixed;
+  left: 12px;
+  bottom: 12px;
+  z-index: 99;
+  max-width: 60vw;
+  padding: 10px 12px;
+  background: #2a0a0a;
+  border: 1px solid #a33;
+  color: #ffd7d7;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}

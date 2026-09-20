@@ -1,0 +1,302 @@
+/* ==========================================================================
+   cards · 卡片 / 三维标注引线 / 底衬
+   —— 从 styles.css 按原分节拆出，选择器与声明逐字未改。
+   ========================================================================== */
+/* ---------------------------------------------------------------- cards */
+
+.cards {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------- 三维标注引线 */
+
+.leaders {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.leader { opacity: 0; transition: opacity .35s var(--ease); }
+.leader.is-on { opacity: 1; }
+
+.leader__line {
+  fill: none;
+  stroke: var(--seg, var(--accent-hi));
+  stroke-width: 1;
+}
+
+.leader__ring {
+  fill: none;
+  stroke: var(--seg, var(--accent-hi));
+  stroke-width: 1;
+  opacity: 0;
+}
+
+.leader__dot { fill: var(--seg, var(--accent-hi)); }
+
+.leader__tag-bg { fill: var(--seg, var(--accent)); }
+
+.leader__tag-tx {
+  /* 注意：这里不能写死 fill —— 标签底色跟着段的工作温度走，
+     底色亮（比如 01 段是 300 K 的纯白）时文字必须翻成深色，
+    颜色由 leaders.js 按底色亮度算好写进 style.fill。 */
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .14em;
+  text-anchor: middle;
+}
+
+/* ------------------------------------------- 全局标注（outro 章的两侧引线）
+   8 个功能段同时在两侧挂说明牌 + 引线：说明牌贴在页边，模型在中间不被遮挡。
+   左右分列与纵向排布由 leaders.js 按锚点的屏幕位置算。 */
+.annot {
+  opacity: 0;
+  transition: opacity .45s var(--ease);
+}
+.annot.is-on { opacity: 1; }
+
+.annot__bg {
+  fill: rgba(14, 15, 19, .74);
+  stroke: rgba(255, 255, 255, .10);
+  stroke-width: 1;
+}
+
+.annot__bar { fill: var(--seg, var(--accent-hi)); }
+
+.annot__seg {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .18em;
+  fill: var(--ink-50);
+}
+
+.annot__en {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: .08em;
+  fill: var(--ink-100);
+}
+
+.annot__zh {
+  font-family: var(--cjk);
+  font-size: 12px;
+  letter-spacing: .02em;
+  fill: var(--ink-100);
+}
+
+.annot__spec {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .05em;
+  fill: var(--ink-50);
+}
+
+.annot__line {
+  fill: none;
+  stroke: var(--seg, var(--accent-hi));
+  stroke-width: 1;
+  opacity: .75;
+}
+
+.annot__ring {
+  fill: none;
+  stroke: var(--seg, var(--accent-hi));
+  stroke-width: 1;
+  opacity: .5;
+}
+
+.annot__dot { fill: var(--seg, var(--accent-hi)); }
+
+/* 覆层文字压在 3D 模型上时给一层柔和的底衬，保证可读性 */
+.scrim {
+  position: relative;
+  isolation: isolate;
+}
+
+.scrim::before {
+  content: "";
+  position: absolute;
+  inset: -34px -64px;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(62% 148% at 50% 50%,
+    rgba(4, 5, 8, .92) 0%,
+    rgba(4, 5, 8, .84) 46%,
+    rgba(4, 5, 8, .52) 72%,
+    rgba(4, 5, 8, 0) 100%);
+}
+
+/* 横贯整幅的说明带（规格总表）：左右直接出血到屏幕外，只留上下柔边，
+   这样不会在模型上切出一个方方正正的补丁 */
+.scrim--band::before {
+  inset: -44px -320px;
+  background: linear-gradient(180deg,
+    rgba(4, 5, 8, 0) 0%,
+    rgba(4, 5, 8, .90) 14%,
+    rgba(4, 5, 8, .94) 50%,
+    rgba(4, 5, 8, .90) 86%,
+    rgba(4, 5, 8, 0) 100%);
+}
+
+.card {
+  position: absolute;
+  width: 330px;
+  padding: 0;
+  background: none;
+  border: 0;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity .5s var(--ease), transform .5s var(--ease);
+  will-change: opacity, transform;
+}
+
+.card.is-on { opacity: 1; transform: translateY(0); }
+
+.card[data-side="right"] { right: calc(var(--pad-x) + var(--rail-w) + 24px); }
+.card[data-side="left"]  { left: var(--pad-x); }
+
+.card[data-pos="top"]    { top: 20vh; }
+.card[data-pos="mid"]    { top: 34vh; }
+.card[data-pos="bottom"] { bottom: 16vh; }
+
+.card--hero { width: 384px; padding: 0; }
+
+.card__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.flag {
+  display: inline-block;
+  background: var(--seg, var(--accent));
+  color: var(--on-seg, #fff);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .18em;
+  padding: 5px 12px 5px 9px;
+  transform: skewX(-12deg);
+}
+
+.flag > span { display: inline-block; transform: skewX(12deg); }
+
+.card__temp {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .14em;
+  color: var(--accent-hi);
+  white-space: nowrap;
+}
+
+.card__en {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: .2em;
+  color: var(--ink-50);
+  margin-bottom: 4px;
+}
+
+.card__zh {
+  font-family: var(--cjk);
+  font-size: 25px;
+  font-weight: 500;
+  letter-spacing: .01em;
+  color: var(--ink-100);
+  margin-bottom: 12px;
+}
+
+.card--hero .card__zh { font-size: 32px; }
+
+.card__role {
+  font-size: 14px;
+  line-height: 1.72;
+  color: var(--ink-70);
+  margin: 0 0 10px;
+}
+
+.card__why {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--ink-50);
+  margin: 0 0 14px;
+  padding-left: 10px;
+  border-left: 1px solid var(--ink-15);
+}
+
+.card__why b { color: var(--warn); font-weight: 500; }
+
+.kv {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .08em;
+  border-top: 1px solid rgba(255, 255, 255, .08);
+}
+
+.kv__row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, .05);
+}
+
+.kv__row span { color: var(--ink-30); }
+.kv__row b { color: var(--ink-70); font-weight: 500; }
+
+.snippet {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(46, 107, 255, .35);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  line-height: 1.75;
+  letter-spacing: .04em;
+  color: var(--ink-30);
+  white-space: pre;
+  overflow: hidden;
+}
+
+.snippet b { color: var(--accent-hi); font-weight: 500; }
+/* 章节卡把手：只在窄屏出现（点它收起 / 展开抽屉） */
+.card__handle {
+  display: none;
+  width: 100%;
+  height: 22px;
+  margin: -6px 0 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+}
+
+.card__handle i {
+  display: block;
+  width: 44px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--ink-30);
+  transition: background .25s var(--ease);
+}
+
+.card__handle:active i { background: var(--accent-hi); }
+
+/* 手机端把手旁边的小字提示（桌面端不显示） */
+.card__handle-hint {
+  display: none;
+  margin-left: 9px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .16em;
+  color: var(--ink-30);
+}

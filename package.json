@@ -1,0 +1,15 @@
+{
+  "name": "dilution-fridge-afternoon",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "稀释制冷机 · 八段功能拆解（2026-09-18 下午版）—— 零依赖静态站，自带 Node 静态服务器",
+  "scripts": {
+    "start": "node tools/serve.mjs",
+    "dev": "node tools/serve.mjs --open-log",
+    "check": "node tools/check.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

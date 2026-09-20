@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="dark" />
+<title>DILUTION REFRIGERATOR · 八段功能拆解</title>
+<meta name="description" content="工程级分层 3D 视差网站：把稀释制冷机拆成 8 个功能段，滚动即拆机。" />
+<link rel="stylesheet" href="./styles.css?v=20260920c" />
+</head>
+<body>
+
+<canvas id="gl" aria-hidden="true"></canvas>
+
+<div class="fx fx--grid" aria-hidden="true"></div>
+<div class="fx fx--scan" aria-hidden="true"></div>
+<div class="fx fx--grain" aria-hidden="true"></div>
+<div class="fx fx--vignette" aria-hidden="true"></div>
+
+<header class="hud hud--tl">
+  <div class="spec" id="specPanel" aria-label="整机规格"></div>
+</header>
+
+<header class="hud hud--tr">
+  <div class="meta">
+    <div class="meta__row"><span>PROJECT</span><b>DILUTION REFRIGERATOR</b></div>
+    <div class="meta__row"><span>DRAWING</span><b>DR-001 / SEGMENTED</b></div>
+    <div class="meta__row"><span>REV</span><b>A</b></div>
+    <div class="meta__row"><span>UNIT</span><b>mm · K</b></div>
+  </div>
+  <button class="ghost" id="btnDoc" type="button">跳过动画 · 查看规格表</button>
+</header>
+
+<aside class="rail" id="rail" aria-label="功能段导航"></aside>
+
+<div class="cards" id="cards"></div>
+
+<div class="dotgrid-host" id="dotGrid" aria-hidden="true">
+  <div class="dotgrid-host__label">SEGMENT TRACE</div>
+</div>
+
+<div class="overlay overlay--boot" id="overlayBoot" aria-hidden="true">
+  <div class="boot" id="bootLines"></div>
+  <div class="boot__foot">
+    <div class="stack">
+      <div class="stack__en">SCROLL TO DISASSEMBLE</div>
+      <div class="stack__zh">一台比外太空还冷的机器，由 8 个功能段组成</div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay overlay--graph" id="overlayGraph" aria-hidden="true">
+  <div class="graph" id="graph"></div>
+</div>
+
+<div class="overlay overlay--table" id="overlayTable" aria-hidden="true">
+  <div class="table scrim scrim--band" id="specTable"></div>
+</div>
+
+<div class="overlay overlay--signal" id="overlaySignal" aria-hidden="true">
+  <div class="signal-hud scrim">
+    <div class="signal-hud__en">SIGNAL PATH TRACE</div>
+    <div class="signal-hud__zh">一条微波控制线，从 300 K 走到 15 mK</div>
+    <ol class="signal-hud__nodes" id="signalNodes"></ol>
+  </div>
+</div>
+
+<div class="overlay overlay--xray" id="overlayXray" aria-hidden="true">
+  <div class="xray-hud scrim">
+    <div class="xray-hud__en">X-RAY SECTION</div>
+    <div class="xray-hud__zh">沿 Z 轴剖开，看八段在垂直方向上怎么叠</div>
+  </div>
+</div>
+
+<div class="overlay overlay--shields" id="overlayShields" aria-hidden="true">
+  <div class="shields-hud scrim">
+    <div class="shields-hud__en">SHIELDING STACK</div>
+    <div class="shields-hud__zh">四级辐射罩由内向外依次套上，最外面是真空外罩</div>
+    <ol class="shields-hud__nodes" id="shieldNodes"></ol>
+  </div>
+</div>
+
+<div class="plates" id="plates" aria-hidden="true"></div>
+
+<button class="ui-toggle" id="uiToggle" type="button" aria-pressed="false">隐藏说明</button>
+
+<footer class="hud hud--b">
+  <div class="hud__scene" id="sceneLabel">BOOT</div>
+  <div class="bar"><i id="progressBar"></i></div>
+  <div class="hud__pct" id="progressPct">000</div>
+</footer>
+
+<main id="scroll"></main>
+
+<div class="docmode" id="docmode" hidden></div>
+<div class="errbox" id="errbox" hidden></div>
+
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>

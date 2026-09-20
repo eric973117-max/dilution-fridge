@@ -1,0 +1,35 @@
+/* ==========================================================================
+   scene · Lenis 必需样式 / 引导行 / 入场初值
+   —— 从 styles.css 按原分节拆出，选择器与声明逐字未改。
+   ========================================================================== */
+/* ==========================================================================
+   追加：Lenis 必需样式 / 引导行 / 卡片入场初值 / 比例人形
+   ========================================================================== */
+
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+.lenis.lenis-stopped { overflow: hidden; }
+.lenis.lenis-smooth iframe { pointer-events: none; }
+
+#scroll { position: relative; }
+.scene { display: block; width: 100%; pointer-events: none; }
+
+.boot__line {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  max-width: 460px;
+}
+
+.boot__lead { flex: 0 0 auto; color: var(--ink-30); min-width: 108px; }
+.boot__val { flex: 0 0 auto; color: var(--ink-100); }
+.boot__dots {
+  flex: 1 1 auto;
+  align-self: center;
+  border-bottom: 1px dotted rgba(255, 255, 255, .16);
+  transform: translateY(-2px);
+}
+
+.card .anim { opacity: 0; }
+.card.is-on .anim { opacity: 1; }

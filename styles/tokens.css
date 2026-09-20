@@ -1,0 +1,59 @@
+/* ==========================================================================
+   tokens · 设计令牌与全局
+   —— 从 styles.css 按原分节拆出，选择器与声明逐字未改。
+   ========================================================================== */
+:root {
+  /* 配色转向 animejs.com 的暖灰体系：暖灰底 + 米白前景 + 珊瑚橙强调。
+     段级的温度色阶（300 K 白 → 10 mK 深蓝）仍然从 data.js 的 accent 来，
+     这里只换底子和通用强调色。 */
+  --bg: #252423;
+  --bg-2: #2a2928;
+  --panel: #302e2d;
+  --haze: #353432;
+  --ink-100: #f6f4f2;
+  --ink-70: #d5d3d1;
+  --ink-50: #b4b1af;
+  --ink-30: #615e5b;
+  --ink-15: #3a3938;
+  --accent: #ff7d36;
+  --accent-hi: #ffb27a;
+  --accent-soft: #ffd9bd;
+  --shield: #4a4847;
+  --warn: #ff4b4b;
+  --paper: #f5f5f2;
+  --paper-ink: #1a1a1a;
+
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --sans: "Inter Tight", "Neue Haas Grotesk Display Pro", Inter, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --cjk: "Noto Sans SC", "HarmonyOS Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+
+  --pad-x: 64px;
+  --rail-w: 214px;
+  /* 压在模型上的 UI 统一用这一套"玻璃"参数（前段 / 后段一致，改这里就全改） */
+  --glass-bg: rgba(7, 8, 11, .62);
+  --glass-bg-strong: rgba(7, 8, 11, .84);
+  --glass-blur: blur(16px) saturate(1.05);
+  --ease: cubic-bezier(.22, .61, .36, 1);
+  --ease-heavy: cubic-bezier(.16, 1, .3, 1);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink-100);
+  font-family: var(--cjk);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  overflow-x: hidden;
+  cursor: default;
+}
+
+body.is-busy { cursor: progress; }
+
+::selection { background: var(--accent); color: #fff; }
