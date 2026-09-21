@@ -1,116 +1,82 @@
 /* ==========================================================================
-   hud · 顶部参数条 / 进度
+   hud · 说明文字 / 元信息 / 进度条
+   —— 从 styles.css 按原分节拆出，选择器与声明逐字未改。
    ========================================================================== */
+/* ------------------------------------------------------------------ hud */
 
 .hud {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: var(--hud-h);
-  z-index: var(--z-hud);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, auto) minmax(0, 1fr);
-  align-items: center;
-  gap: 16px;
-  padding: 0 var(--gutter);
+  z-index: 10;
   pointer-events: none;
 }
 
-.hud > * { pointer-events: auto; }
-
-.hud__brand {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.hud__brand b {
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: .02em;
-}
-
-.hud__brand span {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: .18em;
-  color: var(--ink-faint);
-}
-
-.hud__now {
-  display: flex;
-  flex-direction: column;
+.hud--tl { top: 40px; left: var(--pad-x); }
+.hud--tr { top: 36px; right: var(--pad-x); text-align: right; }
+.hud--b {
+  left: var(--pad-x);
+  right: var(--pad-x);
+  bottom: 30px;
+  display: grid;
+  grid-template-columns: 260px 1fr 56px;
   align-items: center;
-  gap: 2px;
-  min-width: 0;
-  text-align: center;
+  gap: 18px;
 }
 
-.hud__layer {
-  font-size: 13px;
-  color: var(--ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 46vw;
+.hud--tr .ghost { pointer-events: auto; }
+
+.meta {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .13em;
+  line-height: 1.85;
+  color: var(--ink-50);
 }
 
-.hud__temp {
-  font-family: var(--font-mono);
+.meta__row { display: flex; justify-content: flex-end; gap: 12px; }
+.meta__row span { color: var(--ink-30); }
+.meta__row b { color: var(--ink-70); font-weight: 500; }
+
+.ghost {
+  margin-top: 14px;
+  background: transparent;
+  border: 1px solid var(--ink-15);
+  color: var(--ink-50);
+  font-family: var(--cjk);
   font-size: 11px;
   letter-spacing: .06em;
-  color: var(--ink-faint);
+  padding: 7px 11px;
+  cursor: pointer;
+  transition: border-color .3s var(--ease), color .3s var(--ease);
 }
 
-.hud__right {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
-}
+.ghost:hover { border-color: var(--accent); color: var(--ink-100); }
 
-.hud__lang {
-  min-width: 44px;
-  height: 28px;
-  padding: 0 10px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  font-family: var(--font-mono);
+.hud__scene {
+  font-family: var(--mono);
   font-size: 11px;
-  letter-spacing: .08em;
-  color: var(--ink-dim);
-  transition: border-color .2s ease, color .2s ease;
+  letter-spacing: .16em;
+  color: var(--ink-70);
 }
-
-.hud__lang:hover { border-color: var(--line-strong); color: var(--ink); }
 
 .hud__pct {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--ink-faint);
-  min-width: 42px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .1em;
+  color: var(--ink-50);
   text-align: right;
 }
 
-.progress {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 2px;
-  z-index: var(--z-hud);
-  background: rgba(244, 242, 239, .08);
+.bar {
+  height: 1px;
+  background: var(--ink-15);
+  position: relative;
+  overflow: hidden;
 }
 
-.progress > span {
-  display: block;
-  height: 100%;
-  width: 0;
-  background: var(--ink);
-  opacity: .7;
+.bar i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0%;
+  background: var(--accent-hi);
+  box-shadow: 0 0 12px rgba(46, 107, 255, .8);
 }
-
-/* 手机端专用按钮（桌面端不出现） */
-.stepper { display: none; }
