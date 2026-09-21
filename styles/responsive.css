@@ -263,35 +263,55 @@
 
   /* ---- ±2 步步进器（手机专用）：手指滑动没办法一格一格，用这两颗按钮精确推进 ----
      --drawer-px 由 main.js 每帧写入，所以它永远贴在章节抽屉上沿之上 */
-  .stepper {
-    display: flex;
+  /* ---- 步数滑轨（手机专用）：想直接跳到某一步就拖它 ----
+     位置在步进器上面一条（--drawer-px 同样是 main.js 每帧写进来的抽屉实际高度） */
+  .scrub {
+    display: block;
     position: fixed;
     left: 12px;
     right: 12px;
     z-index: 14;
-    justify-content: space-between;
-    bottom: calc(var(--dock-h) + var(--drawer-px, 34vh) + 10px);
-    pointer-events: none;
-  }
-
-  .stepper button {
-    pointer-events: auto;
-    min-width: 80px;
-    min-height: 42px;
-    padding: 0 14px;
-    border: 1px solid var(--ink-15);
-    border-radius: 999px;
+    bottom: calc(var(--dock-h) + var(--drawer-px, 34vh) + 12px);
+    height: 24px;
+    margin: 0;
+    padding: 0;
     background: none;
-    color: var(--ink-70);
-    font-family: var(--mono);
-    font-size: 10px;
-    letter-spacing: .12em;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, .95), 0 0 12px rgba(0, 0, 0, .8);
-    -webkit-backdrop-filter: var(--glass-blur);
-    backdrop-filter: var(--glass-blur);
+    -webkit-appearance: none;
+    appearance: none;
   }
 
-  .stepper button:active { color: var(--ink-100); border-color: var(--accent-hi); }
+  .scrub::-webkit-slider-runnable-track {
+    height: 3px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, .2);
+  }
+
+  .scrub::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    margin-top: -8.5px;
+    border-radius: 50%;
+    background: var(--accent-hi);
+    border: 2px solid rgba(0, 0, 0, .55);
+    box-shadow: 0 1px 6px rgba(0, 0, 0, .6);
+  }
+
+  .scrub::-moz-range-track {
+    height: 3px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, .2);
+  }
+
+  .scrub::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--accent-hi);
+    border: 2px solid rgba(0, 0, 0, .55);
+  }
+
+  /* 「±2 步」那两颗按钮已被"步数滑轨"取代，整块移除（桌面端本来就 display:none） */
 
   /* 01–08 段这几章：段位条背后的渐变、左上参数板背后的径向暗底，也一并去掉 */
   .rail { background: none; }

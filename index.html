@@ -6,7 +6,7 @@
 <meta name="color-scheme" content="dark" />
 <title>DILUTION REFRIGERATOR · 八段功能拆解</title>
 <meta name="description" content="工程级分层 3D 视差网站：把稀释制冷机拆成 8 个功能段，滚动即拆机。" />
-<link rel="stylesheet" href="./styles.css?v=20260920g" />
+<link rel="stylesheet" href="./styles.css?v=20260920i" />
 </head>
 <body>
 
@@ -84,11 +84,9 @@
 
 <button class="ui-toggle" id="uiToggle" type="button" aria-pressed="false">隐藏说明</button>
 
-<!-- 手机端专用：手指滑动没法像滚轮那样一格一格，这两颗按钮用来精确推进 -->
-<div class="stepper" id="stepControls">
-  <button type="button" id="stepBack">◀ 退 2 步</button>
-  <button type="button" id="stepFwd">进 2 步 ▶</button>
-</div>
+<!-- 步数滑轨（手机专用）：直接拖到想看的步数，不用一路滑 -->
+<input class="scrub" id="scrub" type="range" min="0" max="160" step="1" value="0"
+       aria-label="拖动查看任意步骤" />
 
 <footer class="hud hud--b">
   <div class="hud__scene" id="sceneLabel">BOOT</div>

@@ -33,7 +33,7 @@ window.addEventListener('unhandledrejection', (e) => showError(`Promise: ${e.rea
 
 /* 样式版本号（与 styles.css 的 @import ?v= 保持一致）——
    控制台里一眼能看出当前页面拿的是哪一版 CSS，排查"改了没生效"用。 */
-const STYLE_VERSION = '20260920g';
+const STYLE_VERSION = '20260920i';
 console.info(`[ui] styles v${STYLE_VERSION}`);
 
 const params = new URLSearchParams(location.search);
@@ -161,12 +161,9 @@ async function start() {
   const narrowLayout = window.matchMedia('(max-width: 900px)').matches;
   if (narrowLayout) document.body.classList.add('mobile-cards');
 
-  /* 手机端卡片的节奏：滑入（前 6%）→ 停住（直到 84%，这段是留给你读的）→ 滑走并淡出（后 16%）。
-     全部由**章节进度**驱动，而不是跟着滚动 1:1 —— 所以刷得再快，卡片也会停在原位让你看完；
-     往回滚同样原路返回（上下可逆）。桌面端不走这条分支。
-     另外 motion.js 里手机端把整条时间轴拉长到 1.6 倍（MOBILE_SCROLL_STRETCH），
-     所以这里 0.06→0.84 这段"停住"落到手指上大约是 1300px 的行程，够读完一段。 */
-  const CARD = { in: 0.06, holdEnd: 0.84, out: 0.16, travel: 0.34 };
+  /* 手机端卡片：**不再停顿、不再滑进滑出**（用户：不用停画面，回到最初的节奏）。
+     现在它只是"钉在模型带下沿的那块说明" —— 讲到哪一段就换成哪一段的内容，
+     位置一动不动，画面也不再为它停一下。桌面端不走这条分支。 */
   function updateMobileCard(sc, local) {
     const active = sc.seg ? ui.cards.get(sc.seg) : null;
     ui.cards.forEach((el) => {
@@ -175,12 +172,9 @@ async function start() {
     });
     if (!active) return;
     if (!active.classList.contains('is-on')) active.classList.add('is-on');
-    const sm = (v) => v * v * (3 - 2 * v);
-    const t1 = sm(Math.min(1, Math.max(0, local / CARD.in)));
-    const t2 = sm(Math.min(1, Math.max(0, (local - CARD.holdEnd) / CARD.out)));
-    const dy = ((1 - t1) - t2) * CARD.travel * window.innerHeight;
-    active.style.transform = `translateY(${dy.toFixed(1)}px)`;
-    active.style.opacity = (t1 * (1 - t2)).toFixed(3);
+    if (active.style.transform !== 'translateY(0px)') active.style.transform = 'translateY(0px)';
+    if (active.style.opacity !== '1') active.style.opacity = '1';
+    void local;
   }
   const iXray = SCENES.findIndex((s) => s.key === 'xray');
   const iSignal = SCENES.findIndex((s) => s.key === 'signal');
@@ -443,7 +437,7 @@ async function start() {
       /* 点了"隐藏说明"之后，UI 带归零 —— 模型立刻长满整屏 */
       const uiHidden = document.body.classList.contains('ui-hidden');
       const uiBand = hasCard ? cardEl.offsetHeight : (bigOverlay && !uiHidden ? H * 0.34 : 0);
-      /* 步进器要正好贴在 UI 带的上沿：把实际高度写进 CSS 变量（≤900px 的 .stepper 用它定位） */
+      /* 步进器/滑轨要正好贴在 UI 带的上沿：把实际高度写进 CSS 变量（≤900px 的 .scrub 用它定位） */
       if (uiBand !== lastUiBand) {
         document.documentElement.style.setProperty('--drawer-px', `${Math.round(uiBand)}px`);
         lastUiBand = uiBand;
@@ -575,9 +569,10 @@ async function start() {
     plateLabels.update(stage.camera, machine.plates, machine.chambers);
 
     document.getElementById('progressBar').style.width = `${(st.progress * 100).toFixed(1)}%`;
-    document.getElementById('progressPct').textContent = String(
-      Math.round(st.progress * TOTAL_STEPS),
-    ).padStart(3, '0');
+    const stepNow = Math.round(st.progress * TOTAL_STEPS);
+    document.getElementById('progressPct').textContent = String(stepNow).padStart(3, '0');
+    /* 滑轨跟着滚动走（手指正在拖的时候不去抢它的值） */
+    if (scrub && !scrubbing) scrub.value = String(stepNow);
 
     ui.signalNodes.querySelectorAll('li').forEach((el) => {
       el.classList.toggle('is-on', motion.signalT >= Number(el.dataset.t) - 0.02);
@@ -607,15 +602,22 @@ async function start() {
     else window.scrollTo({ top: y, behavior: prefersReduced ? 'auto' : 'smooth' });
   }
 
-  /* 手机端"±2 步"：手指滑动没办法像滚轮那样一格一格，用这两颗按钮精确推进。
-     桌面端按钮是 display:none（见 styles/overlays.css 与 responsive.css），点了也没有副作用。 */
-  const jumpSteps = (n) => {
+  /* 手机端「步数滑轨」：直接拖到想看的步数（"±2 步"那两颗按钮已被它取代，2026-09-21 移除）。
+     拖动时用 immediate 定位（不做平滑）—— 否则手指和画面会互相追，很黏。 */
+  const scrub = document.getElementById('scrub');
+  let scrubbing = false;
+  const scrubTo = (step) => {
     const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-    const y = Math.max(0, Math.min(max, window.scrollY + (n / TOTAL_STEPS) * max));
-    smoothTo(y);
+    const y = (Math.max(0, Math.min(TOTAL_STEPS, step)) / TOTAL_STEPS) * max;
+    if (engine.lenis) engine.lenis.scrollTo(y, { immediate: true, force: true });
+    else window.scrollTo(0, y);
   };
-  document.getElementById('stepBack')?.addEventListener('click', () => jumpSteps(-2));
-  document.getElementById('stepFwd')?.addEventListener('click', () => jumpSteps(2));
+  if (scrub) {
+    scrub.addEventListener('input', () => { scrubbing = true; scrubTo(Number(scrub.value)); });
+    scrub.addEventListener('change', () => { scrubbing = false; });
+    scrub.addEventListener('pointerup', () => { scrubbing = false; });
+    scrub.addEventListener('pointercancel', () => { scrubbing = false; });
+  }
 
   function scrollByViewport(dir) {
     const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
