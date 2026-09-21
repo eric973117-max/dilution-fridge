@@ -1,0 +1,60 @@
+/* ==========================================================================
+   rail · 层级轨道（7 层导航）
+   ========================================================================== */
+
+.rail {
+  position: fixed;
+  left: var(--gutter);
+  bottom: calc(var(--gutter) + 12px);
+  z-index: var(--z-rail);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: min(760px, 62vw);
+}
+
+.rail__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 12px 0 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+  transition: color .2s ease, border-color .2s ease, background-color .2s ease;
+}
+
+.rail__item::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent, var(--ink-faint));
+  opacity: .5;
+  transition: opacity .2s ease, box-shadow .2s ease;
+}
+
+.rail__num {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: .08em;
+  opacity: .7;
+}
+
+.rail__name { white-space: nowrap; }
+
+.rail__item:hover { color: var(--ink-dim); border-color: var(--line); }
+
+.rail__item.is-on {
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+
+.rail__item.is-on::before {
+  opacity: 1;
+  box-shadow: 0 0 10px var(--accent, var(--ink));
+}

@@ -1,4 +1,15 @@
 /* ==========================================================================
+   overlays · 覆盖层（依赖图 / 三段标注引线 / 冷盘标签）
+
+   迁移自「稀释制冷机-下午版」的 styles/overlays.css。原文件里 boot 自检行、
+   signal / xray / shields 三块 HUD、总规格表、错误框、步进器这些"老站专属"的样式
+   已经删掉（新站用卡片与 HUD 表达，不再用这些覆盖层）。
+
+   变量名沿用原站的一套（--ink-100 / --ink-30 / --accent …），
+   它们在 styles/tokens.css 里做了别名，改配色仍然只改 tokens.css。
+   ========================================================================== */
+
+/* ==========================================================================
    overlays · 开机 / 依赖图 / 链路 / 剖面 / 总表 / 错误框
    —— 从 styles.css 按原分节拆出，选择器与声明逐字未改。
    ========================================================================== */
@@ -14,43 +25,6 @@
 }
 
 .overlay.is-on { opacity: 1; }
-
-/* boot */
-
-.overlay--boot {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: 0 var(--pad-x) 128px;
-}
-
-.boot {
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: .16em;
-  line-height: 2.05;
-  color: var(--ink-50);
-  margin-bottom: 46px;
-}
-
-.boot__line { opacity: 0; transform: translateY(6px); }
-.boot__line.is-on { opacity: 1; transform: none; }
-.boot__line i { font-style: normal; color: var(--ink-30); }
-.boot__line b { color: var(--ink-100); font-weight: 500; }
-
-.stack__en {
-  font-family: var(--mono);
-  font-size: clamp(18px, 2.4vw, 34px);
-  letter-spacing: .3em;
-  color: var(--ink-100);
-}
-
-.stack__zh {
-  margin-top: 12px;
-  font-size: 14px;
-  letter-spacing: .08em;
-  color: var(--ink-50);
-}
 
 /* dependency graph */
 
@@ -144,155 +118,6 @@
 .graph__legend i.l-signal::before { background: var(--accent); }
 .graph__legend i.l-shield::before { background: var(--shield); }
 
-/* signal trace hud */
-
-.overlay--signal { display: flex; align-items: flex-end; justify-content: center; padding-bottom: 96px; }
-
-/* x-ray section hud */
-
-.overlay--xray { display: flex; align-items: flex-end; justify-content: center; padding-bottom: 96px; }
-
-.xray-hud { text-align: center; }
-
-.xray-hud__en {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: .28em;
-  color: var(--ink-50);
-}
-
-.xray-hud__zh {
-  margin-top: 8px;
-  font-size: 15px;
-  letter-spacing: .06em;
-  color: var(--ink-100);
-}
-
-.signal-hud { text-align: center; }
-
-.signal-hud__en {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: .28em;
-  color: var(--ink-50);
-}
-
-.signal-hud__zh {
-  margin-top: 8px;
-  font-size: 15px;
-  letter-spacing: .06em;
-  color: var(--ink-100);
-}
-
-.signal-hud__nodes {
-  display: flex;
-  gap: 22px;
-  justify-content: center;
-  list-style: none;
-  margin: 22px 0 0;
-  padding: 0;
-  font-family: var(--mono);
-  font-size: 9.5px;
-  letter-spacing: .12em;
-  color: var(--ink-30);
-}
-
-.signal-hud__nodes li {
-  padding-top: 9px;
-  border-top: 1px solid var(--ink-15);
-  transition: color .3s var(--ease), border-color .3s var(--ease);
-}
-
-.signal-hud__nodes li.is-on { color: var(--ink-100); border-top-color: var(--accent-hi); }
-
-/* shielding stack hud —— 结尾"逐层套罩"那五层 */
-
-/* "隐藏说明"按钮：只在窄屏 + 最后两章出现（样式在 responsive.css） */
-.ui-toggle { display: none; }
-
-/* "±2 步"步进器：只在窄屏出现（样式在 responsive.css） */
-.stepper { display: none; }
-
-.overlay--shields { display: grid; place-items: center end; padding-right: 56px; }
-
-.shields-hud { text-align: right; }
-
-.shields-hud__en {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: .28em;
-  color: var(--ink-50);
-}
-
-.shields-hud__zh {
-  margin-top: 8px;
-  font-size: 15px;
-  letter-spacing: .06em;
-  color: var(--ink-100);
-}
-
-.shields-hud__nodes {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 12px;
-  list-style: none;
-  margin: 22px 0 0;
-  padding: 0;
-  text-align: left;
-}
-
-.shields-hud__nodes li {
-  width: 306px;
-  padding-top: 9px;
-  border-top: 1px solid var(--ink-15);
-  font-family: var(--mono);
-  color: var(--ink-30);
-  transition: color .35s var(--ease), border-color .35s var(--ease);
-}
-
-.shields-hud__nodes li i {
-  font-style: normal;
-  font-size: 9px;
-  letter-spacing: .18em;
-  opacity: .75;
-}
-
-.shields-hud__nodes li b {
-  display: block;
-  margin-top: 5px;
-  font-size: 11.5px;
-  font-weight: 500;
-  letter-spacing: .05em;
-  color: var(--ink-70);
-  transition: color .35s var(--ease);
-}
-
-.shields-hud__nodes li em {
-  display: block;
-  margin-top: 4px;
-  font-style: normal;
-  font-size: 8.5px;
-  line-height: 1.5;
-  letter-spacing: .1em;
-}
-
-.shields-hud__nodes li p {
-  margin: 8px 0 0;
-  font-family: var(--cjk);
-  font-size: 11.5px;
-  line-height: 1.65;
-  letter-spacing: .02em;
-  opacity: 0;
-  max-height: 0;
-  overflow: hidden;
-  transition: opacity .35s var(--ease), max-height .45s var(--ease);
-}
-
-.shields-hud__nodes li.is-on { color: var(--ink-100); border-top-color: var(--accent-hi); }
-.shields-hud__nodes li.is-on b { color: var(--ink-100); }
-.shields-hud__nodes li.is-on p { opacity: 1; max-height: 120px; }
-
 /* 冷盘标签 —— 前面各章挂在六块平台旁边的名牌 */
 
 .plates {
@@ -375,78 +200,253 @@
   border-right: 1px solid var(--accent-hi);
 }
 
-/* final spec table
-   outro 章：宽屏下表格行不出现 —— 8 个功能段改成两侧引线标注（leaders.js），
-   这里只剩左上角的图纸标题与整机总述，模型在中间不被遮挡。 */
+/* ---------------------------------------------------------------------------
+   三段标注引线 / 全局标注牌 / 冷盘标签
+   （从原项目 styles/cards.css 与 styles/responsive.css 抽出来的那几块规则）
+   --------------------------------------------------------------------------- */
 
-.overlay--table { display: flex; align-items: flex-start; justify-content: flex-start; padding: 76px 0 0 72px; }
 
-.table {
-  width: min(560px, 44vw);
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: .06em;
-}
 
-.table__title {
-  font-size: 13px;
-  letter-spacing: .24em;
-  color: var(--ink-100);
-  margin-bottom: 10px;
-}
+/* ------------------------------------------------------- 三维标注引线 */
 
-/* 合体章与总表章共用这块角落信息：标题按章切换 */
-.table__title .t-sheet { display: none; }
-.overlay--table[data-mode="outro"] .table__title .t-sheet { display: inline; }
-.overlay--table[data-mode="outro"] .table__title .t-assembly { display: none; }
-.overlay--table[data-mode="hold"] .table__title .t-sheet,
-.overlay--table[data-mode="shields"] .table__title .t-sheet { display: inline; }
-.overlay--table[data-mode="hold"] .table__title .t-assembly,
-.overlay--table[data-mode="shields"] .table__title .t-assembly { display: none; }
-
-.table__summary {
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: .05em;
-  line-height: 1.6;
-  color: var(--ink-70);
-  margin-bottom: 16px;
-}
-
-/* 宽屏用两侧引线标注，表格行只在窄屏（引线关闭）里显示 */
-@media (min-width: 901px) {
-  .table__rows { display: none; }
-  /* 角落那块信息不再用整幅底衬，贴着文字留一点柔光，别压到模型上 */
-  .overlay--table .scrim--band::before { inset: -20px -26px; }
-}
-
-.table__row {
-  display: grid;
-  grid-template-columns: 52px 1.4fr 1.1fr 1fr 1.1fr;
-  gap: 16px;
-  padding: 10px 0;
-  border-top: 1px solid rgba(255, 255, 255, .08);
-  color: var(--ink-70);
-}
-
-.table__row.head { color: var(--ink-50); border-top-color: var(--ink-30); }
-.table__row b { color: var(--ink-100); font-weight: 500; }
-.table__row .zh { font-family: var(--cjk); font-size: 12px; color: var(--ink-70); letter-spacing: .02em; }
-
-/* ------------------------------------------------------------- tutorial */
-
-.errbox {
+.leaders {
   position: fixed;
-  left: 12px;
-  bottom: 12px;
-  z-index: 99;
-  max-width: 60vw;
-  padding: 10px 12px;
-  background: #2a0a0a;
-  border: 1px solid #a33;
-  color: #ffd7d7;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9;
+  pointer-events: none;
+  overflow: visible;
+}
+
+
+.leader { opacity: 0; transition: opacity .35s var(--ease); }
+
+.leader.is-on { opacity: 1; }
+
+
+.leader__line {
+  fill: none;
+  stroke: var(--seg, var(--accent-hi));
+  stroke-width: 1;
+}
+
+
+.leader__ring {
+  fill: none;
+  stroke: var(--seg, var(--accent-hi));
+  stroke-width: 1;
+  opacity: 0;
+}
+
+
+.leader__dot { fill: var(--seg, var(--accent-hi)); }
+
+
+.leader__tag-bg { fill: var(--seg, var(--accent)); }
+
+
+.leader__tag-tx {
+  /* 注意：这里不能写死 fill —— 标签底色跟着段的工作温度走，
+     底色亮（比如 01 段是 300 K 的纯白）时文字必须翻成深色，
+    颜色由 leaders.js 按底色亮度算好写进 style.fill。 */
   font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .14em;
+  text-anchor: middle;
+}
+
+
+/* ------------------------------------------- 全局标注（outro 章的两侧引线）
+   8 个功能段同时在两侧挂说明牌 + 引线：说明牌贴在页边，模型在中间不被遮挡。
+   左右分列与纵向排布由 leaders.js 按锚点的屏幕位置算。 */
+.annot {
+  opacity: 0;
+  transition: opacity .45s var(--ease);
+}
+
+.annot.is-on { opacity: 1; }
+
+
+.annot__bg {
+  fill: rgba(14, 15, 19, .74);
+  stroke: rgba(255, 255, 255, .10);
+  stroke-width: 1;
+}
+
+
+.annot__bar { fill: var(--seg, var(--accent-hi)); }
+
+
+.annot__seg {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .18em;
+  fill: var(--ink-50);
+}
+
+
+.annot__en {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: .08em;
+  fill: var(--ink-100);
+}
+
+
+.annot__zh {
+  font-family: var(--cjk);
+  font-size: 12px;
+  letter-spacing: .02em;
+  fill: var(--ink-100);
+}
+
+
+.annot__spec {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .05em;
+  fill: var(--ink-50);
+}
+
+
+.annot__line {
+  fill: none;
+  stroke: var(--seg, var(--accent-hi));
+  stroke-width: 1;
+  opacity: .75;
+}
+
+
+.annot__ring {
+  fill: none;
+  stroke: var(--seg, var(--accent-hi));
+  stroke-width: 1;
+  opacity: .5;
+}
+
+
+.annot__dot { fill: var(--seg, var(--accent-hi)); }
+
+@media (max-width: 900px) {
+
+
+  /* 底卡模式下引线没有落脚点，直接关掉，免得线头飘在屏幕外 */
+  .leaders { display: none; }
+
+
+  /* 冷盘标签：手机端一次只显示当前那块（固定位置在 src/plates.js）。
+     这里**只留文字、不要底色**：底纹压着线稿，字用一层阴影保证读得清。 */
+  .plate-label__body {
+    max-width: 232px;
+    padding: 0;
+    background: none;
+    border-left: 0;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .plate-label__name { font-size: 12px; }
+
+  .plate-label__note { font-size: 10.5px; line-height: 1.55; }
+
+  .plate-label__name,
+.plate-label__meta,
+.plate-label__note {
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .95), 0 0 12px rgba(0, 0, 0, .8);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   新站的手机端（≤900px）：覆盖层统一让进"UI 带"
+   模型带 = [HUD 以下, 抽屉以上]（见 src/director.js 的 mobileFit），
+   所以依赖图也从"左侧竖排"改成"贴在带子底部、可滚动"。
+   --------------------------------------------------------------------------- */
+@media (max-width: 900px) {
+  .overlay--graph {
+    place-items: end center;
+    /* 贴在卡片上沿：卡片底边在 --dock-h，卡片高度写在 --drawer-px */
+    padding: 0 14px calc(var(--dock-h) + var(--drawer-px, 0px) + 10px);
+  }
+
+  .graph { width: 70vw; }
+
+  /* 手机端一律不加遮罩：节点框只留描边 */
+  .graph .node rect { fill: none; }
+  .graph__caption { display: none; }
+  .graph__legend { display: none; }
+
+  /* 标注引线在窄屏上不画（卡片已经在下方，再拉线会穿过模型） */
+  .leaders { display: none; }
+}
+
+/* ---------------------------------------------------------------------------
+   波形操控面板（电子学层：滑杆改参数 → 三维里的波形跟着变）
+   玻璃质感 + 细边框，和原项目那套"透明面板"是同一个语言。
+   --------------------------------------------------------------------------- */
+.wave-panel {
+  position: fixed;
+  left: var(--gutter);
+  bottom: calc(var(--gutter) + 60px);
+  z-index: var(--z-cards);
+  width: 268px;
+  padding: 12px 14px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(10, 12, 16, .42);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: var(--ink-dim);
+  font-family: var(--font-mono);
   font-size: 11px;
-  line-height: 1.6;
-  white-space: pre-wrap;
+  letter-spacing: .04em;
+}
+
+.wave-panel[hidden] { display: none; }
+
+.wave-panel__title {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
+  color: var(--ink);
+  letter-spacing: .12em;
+}
+
+.wave-panel__row {
+  display: grid;
+  grid-template-columns: 74px 1fr 46px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.wave-panel input[type="range"] {
+  width: 100%;
+  height: 2px;
+  appearance: none;
+  background: var(--line-strong);
+  outline: none;
+}
+
+.wave-panel input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ink);
+}
+
+.wave-panel__val { text-align: right; color: var(--ink); }
+
+@media (max-width: 900px) {
+  .wave-panel {
+    left: var(--gutter);
+    right: var(--gutter);
+    width: auto;
+    bottom: calc(var(--dock-h) + var(--drawer-px, 0px) + 150px);
+    font-size: 10px;
+  }
+
+  .wave-panel__row { grid-template-columns: 64px 1fr 40px; }
 }

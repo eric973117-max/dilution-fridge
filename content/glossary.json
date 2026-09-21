@@ -1,0 +1,342 @@
+{
+  "version": 1,
+  "note": "全站术语唯一来源。章节里引用术语只能用这里的 key；要新增术语先加到这里，再由各层引用。中英对照与释义都由这里定，避免不同层翻出不同叫法。",
+  "terms": {
+    "qubit": {
+      "zh": "量子比特",
+      "en": "qubit",
+      "def": {
+        "zh": "量子信息的基本单元。超导量子比特是一个人工电路，不是粒子。",
+        "en": "The basic unit of quantum information. A superconducting qubit is a manufactured circuit, not a particle."
+      }
+    },
+    "transmon": {
+      "zh": "传输子量子比特",
+      "en": "transmon",
+      "def": {
+        "zh": "目前主流的超导量子比特类型：用一个大电容把电荷噪声压下去，代价是对频率设计更敏感。",
+        "en": "The dominant superconducting qubit design: a large shunt capacitor suppresses charge noise, at the cost of tighter frequency engineering."
+      }
+    },
+    "josephson-junction": {
+      "zh": "约瑟夫森结",
+      "en": "Josephson junction",
+      "def": {
+        "zh": "两个超导体之间夹一层绝缘层，提供量子比特必需的非线性 —— 有了它，能级才不是等间距的。",
+        "en": "An insulating barrier between two superconductors. It supplies the nonlinearity a qubit needs: without it, the energy levels would be equally spaced."
+      }
+    },
+    "coupler": {
+      "zh": "耦合器",
+      "en": "coupler",
+      "def": {
+        "zh": "决定两个量子比特之间相互作用强度的可调元件，是两比特门和串扰控制的旋钮。",
+        "en": "A tunable element that sets the interaction strength between two qubits — the knob for two-qubit gates and crosstalk control."
+      }
+    },
+    "readout-resonator": {
+      "zh": "读出谐振腔",
+      "en": "readout resonator",
+      "def": {
+        "zh": "挂在量子比特旁边的微波谐振腔。它的频率随量子态移动，读出就是测这个移动量。",
+        "en": "A microwave resonator coupled to a qubit. Its frequency shifts with the qubit state; measuring that shift is readout."
+      }
+    },
+    "flip-chip": {
+      "zh": "倒装焊",
+      "en": "flip chip",
+      "def": {
+        "zh": "把两块芯片面对面用凸点连起来，比引线键合更短、更一致，是目前扩展量子比特数目常用的封装方式。",
+        "en": "Joining two dies face-to-face with bumps. Shorter and more repeatable than wire bonding; a common way to scale qubit count."
+      }
+    },
+    "wire-bond": {
+      "zh": "引线键合",
+      "en": "wire bond",
+      "def": {
+        "zh": "用细金属丝把芯片焊盘连到载板，工艺成熟但每根线的电感与长度都要单独设计。",
+        "en": "Thin metal wires connecting die pads to a carrier. Mature, but each wire's length and inductance must be designed."
+      }
+    },
+    "quantum-circuit": {
+      "zh": "量子线路",
+      "en": "quantum circuit",
+      "def": {
+        "zh": "用门和测量描述的一段量子计算流程，是提交给量子计算机的「源代码」形态。",
+        "en": "A sequence of gates and measurements describing a computation — the \"source code\" you submit to a quantum computer."
+      }
+    },
+    "transpiler": {
+      "zh": "编译 / 映射",
+      "en": "transpiler",
+      "def": {
+        "zh": "把逻辑线路翻译成目标机器真正支持的门集合，并按芯片的拓扑结构重新路由。",
+        "en": "Translates a logical circuit into the gate set the target machine actually supports, rerouting to match the chip topology."
+      }
+    },
+    "pulse-schedule": {
+      "zh": "脉冲时序",
+      "en": "pulse schedule",
+      "def": {
+        "zh": "把每个门展开成每一路通道上的一段波形与相位，是交给控制电子学的最终指令。",
+        "en": "The final instruction to the control electronics: each gate expanded into a waveform and phase on every channel."
+      }
+    },
+    "job-queue": {
+      "zh": "任务队列",
+      "en": "job queue",
+      "def": {
+        "zh": "多用户共用一台机器时的调度机制；排队时间也是量子计算体验的一部分。",
+        "en": "The scheduling layer when many users share one machine; queue time is part of the experience too."
+      }
+    },
+    "shot": {
+      "zh": "一次采样",
+      "en": "shot",
+      "def": {
+        "zh": "量子测量只给一个结果，要重复很多次才得到概率分布 —— 一次重复叫一个 shot。",
+        "en": "A single measurement returns one outcome. Repeating many times gives the distribution; each repeat is one shot."
+      }
+    },
+    "room-temperature-electronics": {
+      "zh": "室温电子学",
+      "en": "room-temperature electronics",
+      "def": {
+        "zh": "机柜里那一层：产生波形、对齐时序、接收读出信号的设备，工作在 300 K。",
+        "en": "The rack-level equipment that generates waveforms, aligns timing and captures readout, operating at 300 K."
+      }
+    },
+    "awg": {
+      "zh": "任意波形发生器",
+      "en": "AWG (arbitrary waveform generator)",
+      "def": {
+        "zh": "按存储器里的采样点逐点输出电压的设备，是脉冲包络的来源。",
+        "en": "A device that outputs voltage sample by sample from memory — the source of the pulse envelope."
+      }
+    },
+    "dac": {
+      "zh": "数模转换器",
+      "en": "DAC (digital-to-analog converter)",
+      "def": {
+        "zh": "把数字波形变成模拟电压的那一级；它的位数与采样率决定了波形的干净程度。",
+        "en": "The stage that turns digital samples into analog voltage; its resolution and sample rate set how clean the waveform is."
+      }
+    },
+    "fpga": {
+      "zh": "现场可编程门阵列",
+      "en": "FPGA",
+      "def": {
+        "zh": "负责实时时序与反馈逻辑的芯片：门与门之间的等待时间由它精确到纳秒地执行。",
+        "en": "The chip handling real-time sequencing and feedback logic, executing nanosecond-level delays between gates."
+      }
+    },
+    "iq-modulation": {
+      "zh": "IQ 调制",
+      "en": "I/Q modulation",
+      "def": {
+        "zh": "用两路基带信号（同相 I 与正交 Q）合成任意相位与幅度的微波，是「任意门」的做法。",
+        "en": "Combining two baseband signals (in-phase I and quadrature Q) to synthesise any phase and amplitude of microwave — how arbitrary gates are made."
+      }
+    },
+    "lo": {
+      "zh": "本振",
+      "en": "LO (local oscillator)",
+      "def": {
+        "zh": "混频用的参考微波源；它与基带信号相乘，把脉冲搬到量子比特的频率上。",
+        "en": "The reference microwave source used in mixing; multiplied with the baseband signal, it shifts the pulse onto the qubit frequency."
+      }
+    },
+    "coaxial-cable": {
+      "zh": "同轴电缆",
+      "en": "coaxial cable",
+      "def": {
+        "zh": "信号下行的物理通道，同时是电的通路和热的通路 —— 这是低温布线最根本的矛盾。",
+        "en": "The physical path into the fridge, and simultaneously an electrical and a thermal path — the fundamental tension of cryogenic wiring."
+      }
+    },
+    "thermal-anchor": {
+      "zh": "热锚",
+      "en": "thermal anchor",
+      "def": {
+        "zh": "把线缆在某一级冷板上压紧固定，让热量卸在这一级，而不是继续往下传。",
+        "en": "Clamping a cable to a cooling stage so heat is dumped there instead of travelling further down."
+      }
+    },
+    "attenuator": {
+      "zh": "衰减器",
+      "en": "attenuator",
+      "def": {
+        "zh": "按固定比例削弱信号功率；在低温链路里它同时起「把室温噪声压下去」的作用。",
+        "en": "Reduces signal power by a fixed ratio. In a cryogenic chain it also attenuates room-temperature noise travelling down."
+      }
+    },
+    "noise-temperature": {
+      "zh": "噪声温度",
+      "en": "noise temperature",
+      "def": {
+        "zh": "衡量放大器自身噪声的单位：等效成「多加了多少开尔文的噪声」。",
+        "en": "A measure of an amplifier's own noise, expressed as the temperature that would add the same amount."
+      }
+    },
+    "thermal-conductance": {
+      "zh": "热导",
+      "en": "thermal conductance",
+      "def": {
+        "zh": "单位温差下通过的热量。线材选型基本就是「电导要好、热导要小」的取舍。",
+        "en": "Heat flow per unit temperature difference. Choosing cryogenic cable is largely a trade between electrical conduction and thermal conduction."
+      }
+    },
+    "dilution-refrigerator": {
+      "zh": "稀释制冷机",
+      "en": "dilution refrigerator",
+      "def": {
+        "zh": "利用氦-3 / 氦-4 混合液「稀释」过程吸热的制冷机，是目前给超导量子芯片提供 10 mK 环境的标准设备。",
+        "en": "A cryostat that cools by the enthalpy of mixing helium-3 into helium-4; the standard way to put superconducting chips at ~10 mK."
+      }
+    },
+    "pulse-tube": {
+      "zh": "脉冲管制冷机",
+      "en": "pulse tube cooler",
+      "def": {
+        "zh": "没有运动部件在冷端的预冷机，把 300 K 降到 50 K 与 4 K 两级。",
+        "en": "A pre-cooler with no moving parts at the cold end, taking 300 K down to 50 K and 4 K."
+      }
+    },
+    "still": {
+      "zh": "蒸馏室",
+      "en": "still",
+      "def": {
+        "zh": "稀释回路里约 0.9 K 的一级：加热让氦-3 蒸发离开混合液，再由泵抽走、循环使用。",
+        "en": "The ~0.9 K stage of the dilution circuit: heating evaporates helium-3 out of the mixture so it can be pumped away and recycled."
+      }
+    },
+    "mixing-chamber": {
+      "zh": "混合室",
+      "en": "mixing chamber",
+      "def": {
+        "zh": "整机最冷的一级（约 10 mK），量子芯片就挂在它下方。",
+        "en": "The coldest stage of the machine (~10 mK); the quantum chip hangs below it."
+      }
+    },
+    "radiation-shield": {
+      "zh": "辐射屏蔽",
+      "en": "radiation shield",
+      "def": {
+        "zh": "每一级冷板外面套一层罩子，逐级挡住从更热一层辐射下来的光子。",
+        "en": "A shell around each cooling stage, blocking thermal radiation from the warmer stage outside."
+      }
+    },
+    "nbTi": {
+      "zh": "铌钛超导线",
+      "en": "NbTi superconducting line",
+      "def": {
+        "zh": "4 K 以下使用的超导同轴：直流电阻为零，但一旦超过临界温度就失去超导。",
+        "en": "Superconducting coax used below 4 K: zero DC resistance, but it stops superconducting above its critical temperature."
+      }
+    },
+    "twpa": {
+      "zh": "行波参量放大器",
+      "en": "TWPA (travelling-wave parametric amplifier)",
+      "def": {
+        "zh": "接近量子极限的低温放大器，把微弱读出信号在 10 mK 一级先抬起来。",
+        "en": "A near-quantum-limited cryogenic amplifier that lifts the weak readout signal at the 10 mK stage."
+      }
+    },
+    "quantum-limited-amplifier": {
+      "zh": "量子极限放大器",
+      "en": "quantum-limited amplifier",
+      "def": {
+        "zh": "噪声低到接近量子力学允许下限的放大器，是读出效率的关键。",
+        "en": "An amplifier whose added noise approaches the quantum limit; the key to efficient readout."
+      }
+    },
+    "hemt": {
+      "zh": "高电子迁移率晶体管放大器",
+      "en": "HEMT amplifier",
+      "def": {
+        "zh": "4 K 一级的常规低噪声放大器，负责把信号再从低温链末端抬到室温电子学能处理的水平。",
+        "en": "The conventional low-noise amplifier at 4 K, raising the signal to a level room-temperature electronics can handle."
+      }
+    },
+    "circulator": {
+      "zh": "环行器",
+      "en": "circulator",
+      "def": {
+        "zh": "单向器件：规定微波只能按一个方向走，用来把「发出去的信号」和「弹回来的信号」分开。",
+        "en": "A one-way device: microwave may only travel in one direction, separating the outgoing tone from reflections."
+      }
+    },
+    "isolator": {
+      "zh": "隔离器",
+      "en": "isolator",
+      "def": {
+        "zh": "环行器的一种用法，专门挡回波，防止下游噪声倒灌进量子比特。",
+        "en": "A circulator used to block backward travelling noise from reaching the qubit."
+      }
+    },
+    "rabi": {
+      "zh": "拉比振荡",
+      "en": "Rabi oscillation",
+      "def": {
+        "zh": "给一个微波脉冲、看量子态随时间翻转的曲线 —— 校准 π 脉冲幅度靠它。",
+        "en": "Drive a pulse and watch the state oscillate — the calibration curve for π-pulse amplitude."
+      }
+    },
+    "t1-t2": {
+      "zh": "能量弛豫与相位退相干",
+      "en": "T1 / T2",
+      "def": {
+        "zh": "T1 是量子比特回到基态的特征时间，T2 是它记住相位的时间。门必须在远短于这两个数的时间里做完。",
+        "en": "T1 is how fast the qubit relaxes to the ground state; T2 is how long it remembers phase. Gates must be much faster than both."
+      }
+    },
+    "randomized-benchmarking": {
+      "zh": "随机基准测试",
+      "en": "randomized benchmarking",
+      "def": {
+        "zh": "用随机门序列把单个门的错误率测出来，避免被制备与测量误差污染。",
+        "en": "Measuring per-gate error with random sequences, so preparation and measurement errors do not contaminate the number."
+      }
+    },
+    "gate-fidelity": {
+      "zh": "门保真度",
+      "en": "gate fidelity",
+      "def": {
+        "zh": "一个门做得有多准；99.9% 与 99.99% 之间，是「能演示」和「能纠错」的区别。",
+        "en": "How accurately a gate is executed. The gap between 99.9% and 99.99% is the gap between a demo and error correction."
+      }
+    },
+    "quantum-error-correction": {
+      "zh": "量子纠错",
+      "en": "quantum error correction",
+      "def": {
+        "zh": "用多个物理量子比特编码一个逻辑量子比特，靠反复测量把错误压下去。",
+        "en": "Encoding one logical qubit in many physical qubits and repeatedly measuring to suppress errors."
+      }
+    },
+    "surface-code": {
+      "zh": "表面码",
+      "en": "surface code",
+      "def": {
+        "zh": "最常被提到的纠错码：只需近邻耦合与二维排布，正好贴合超导芯片的拓扑。",
+        "en": "The most cited error-correcting code: nearest-neighbour coupling on a 2D lattice, which matches superconducting chip topology."
+      }
+    },
+    "error-mitigation": {
+      "zh": "误差缓解",
+      "en": "error mitigation",
+      "def": {
+        "zh": "不增加物理比特，靠多次测量与后处理把这台机器的误差从结果里扣掉一部分。",
+        "en": "Without extra qubits, using repeated measurements and post-processing to subtract part of the machine's error from the result."
+      }
+    },
+    "magnetic-shielding": {
+      "zh": "磁屏蔽",
+      "en": "magnetic shielding",
+      "def": {
+        "zh": "用高磁导率合金把环境磁场挡在外面。超导量子比特对残余磁场很敏感，磁屏蔽是封装的一部分。",
+        "en": "Blocking the ambient magnetic field with a high-permeability alloy. Superconducting qubits are sensitive to residual field, so the shield is part of the package."
+      }
+    }
+  }
+}

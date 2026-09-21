@@ -1,59 +1,67 @@
 /* ==========================================================================
-   tokens · 设计令牌与全局
-   —— 从 styles.css 按原分节拆出，选择器与声明逐字未改。
+   tokens · 设计令牌
+   全站唯一改配色的地方。其余样式表只引用这里的变量。
+   温度色阶是全站的统一语言：看到颜色就知道自己在哪一层（见 docs/PLAN.md 美术风格）。
    ========================================================================== */
+
 :root {
-  /* 配色转向 animejs.com 的暖灰体系：暖灰底 + 米白前景 + 珊瑚橙强调。
-     段级的温度色阶（300 K 白 → 10 mK 深蓝）仍然从 data.js 的 accent 来，
-     这里只换底子和通用强调色。 */
+  /* 底色（与 src/stage.js 的 BG_DARK / BG_GRAY 保持一致） */
   --bg: #252423;
-  --bg-2: #2a2928;
-  --panel: #302e2d;
-  --haze: #353432;
-  --ink-100: #f6f4f2;
-  --ink-70: #d5d3d1;
-  --ink-50: #b4b1af;
-  --ink-30: #615e5b;
-  --ink-15: #3a3938;
-  --accent: #ff7d36;
-  --accent-hi: #ffb27a;
-  --accent-soft: #ffd9bd;
-  --shield: #4a4847;
-  --warn: #ff4b4b;
-  --paper: #f5f5f2;
-  --paper-ink: #1a1a1a;
+  --bg-gray: #4a4847;
+  --ink: #f4f2ef;
+  --ink-dim: rgba(244, 242, 239, .64);
+  --ink-faint: rgba(244, 242, 239, .38);
+  --line: rgba(244, 242, 239, .16);
+  --line-strong: rgba(244, 242, 239, .3);
 
-  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-  --sans: "Inter Tight", "Neue Haas Grotesk Display Pro", Inter, -apple-system, "Helvetica Neue", Arial, sans-serif;
-  --cjk: "Noto Sans SC", "HarmonyOS Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  /* 温度色阶：300 K → 10 mK */
+  --t-300k: #ffb066;
+  --t-50k: #9ad1ff;
+  --t-4k: #6fc7ff;
+  --t-1k: #7fe3d4;
+  --t-100mk: #8fd0ff;
+  --t-10mk: #c9a6ff;
 
-  --pad-x: 64px;
-  --rail-w: 214px;
-  /* 压在模型上的 UI 统一用这一套"玻璃"参数（前段 / 后段一致，改这里就全改） */
-  --glass-bg: rgba(7, 8, 11, .62);
-  --glass-bg-strong: rgba(7, 8, 11, .84);
-  --glass-blur: blur(16px) saturate(1.05);
+  /* 字体：只用系统里就有的字族，不下载字体文件（离线可跑、也没有字体授权问题） */
+  --font-sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+               "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  /* 版面常数（改这里要同步改 src/director.js 的 DOCK / TOP_PAD） */
+  --hud-h: 62px;
+  --rail-h: 44px;
+  --gutter: 24px;
+  --drawer-px: 0px;
+
+  /* 层级 */
+  --z-canvas: 1;
+  --z-vignette: 2;
+  --z-cards: 6;
+  --z-rail: 7;
+  --z-hud: 8;
+  --z-err: 30;
+
+  /* 由 director 每帧写入：白模章的暗角强度 */
+  --vig: .78;
+
+  /* ---------------------------------------------------------------------
+     覆盖层（styles/overlays.css，从原站整段迁移）沿用了原站的变量名 —— 这里做别名，
+     这样那些样式表一行都不用改，改配色仍然只改这个文件。
+     --accent / --accent-hi 会在进入某一层时由 director 写成该层的温度色。
+     --------------------------------------------------------------------- */
+  --ink-100: var(--ink);
+  --ink-70: rgba(244, 242, 239, .70);
+  --ink-50: rgba(244, 242, 239, .50);
+  --ink-30: rgba(244, 242, 239, .30);
+  --ink-15: rgba(244, 242, 239, .15);
+  --mono: var(--font-mono);
+  --cjk: var(--font-sans);
   --ease: cubic-bezier(.22, .61, .36, 1);
-  --ease-heavy: cubic-bezier(.16, 1, .3, 1);
+  --pad-x: var(--gutter);
+  --accent: var(--t-4k);
+  --accent-hi: var(--t-50k);
+  --shield: #2b3a55;
+
+  /* 底部 UI 带（轨道 + 步进器）的总高，与 src/director.js 的 DOCK 一致 */
+  --dock-h: 92px;
 }
-
-* { box-sizing: border-box; }
-
-html, body {
-  margin: 0;
-  padding: 0;
-  background: var(--bg);
-  color: var(--ink-100);
-  font-family: var(--cjk);
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-}
-
-body {
-  overflow-x: hidden;
-  cursor: default;
-}
-
-body.is-busy { cursor: progress; }
-
-::selection { background: var(--accent); color: #fff; }

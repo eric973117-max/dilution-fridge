@@ -1,0 +1,91 @@
+/* ==========================================================================
+   card · 章节卡
+   桌上版：右侧一栏，同一时刻只显示当前这一章（.is-on）。
+   手机端：底部抽屉（见 responsive.css），位置由 director 每帧写内联 transform。
+   ========================================================================== */
+
+.cards {
+  position: fixed;
+  top: calc(var(--hud-h) + 34px);
+  right: var(--gutter);
+  width: min(420px, 38vw);
+  max-height: calc(100vh - var(--hud-h) - 140px);
+  z-index: var(--z-cards);
+  pointer-events: none;
+}
+
+.card {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+  max-height: calc(100vh - var(--hud-h) - 140px);
+  overflow-y: auto;
+  padding: 18px 20px 20px;
+  border-left: 1px solid var(--line);
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity .5s ease, transform .5s ease;
+  pointer-events: none;
+  scrollbar-width: thin;
+}
+
+.card.is-on {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+.card__head { margin-bottom: 12px; }
+
+.card__label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: .16em;
+  color: var(--accent, var(--ink-faint));
+  margin-bottom: 8px;
+}
+
+.card__title {
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: .01em;
+}
+
+.card__body p {
+  color: var(--ink-dim);
+  margin-bottom: 10px;
+}
+
+.card__body p:last-child { margin-bottom: 0; }
+
+.card__todo {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+.card__specs {
+  width: 100%;
+  margin-top: 16px;
+  font-size: 12px;
+}
+
+.card__specs th,
+.card__specs td {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  font-weight: 400;
+}
+
+.card__specs th { color: var(--ink-faint); }
+
+.card__specs td {
+  font-family: var(--font-mono);
+  text-align: right;
+  color: var(--ink-dim);
+  white-space: nowrap;
+}

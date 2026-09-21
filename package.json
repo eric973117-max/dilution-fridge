@@ -1,13 +1,14 @@
 {
-  "name": "dilution-fridge-afternoon",
+  "name": "quantum-fullstack-site",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "稀释制冷机 · 八段功能拆解（2026-09-18 下午版）—— 零依赖静态站，自带 Node 静态服务器",
+  "description": "全链路量子计算展示站 —— 从云端任务到 10 mK 芯片脉冲。零运行时依赖的静态站 + 内容模块化",
   "scripts": {
-    "start": "node tools/serve.mjs",
-    "dev": "node tools/serve.mjs --open-log",
-    "check": "node tools/check.mjs"
+    "start": "node tools/gen.mjs && node tools/serve.mjs",
+    "gen": "node tools/gen.mjs",
+    "check": "node tools/check.mjs",
+    "pack": "node tools/gen.mjs && node tools/pack.mjs"
   },
   "engines": {
     "node": ">=18"
