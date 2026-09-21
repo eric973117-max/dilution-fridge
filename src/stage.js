@@ -29,13 +29,71 @@ export function createStage(canvas) {
   if (!renderer.getContext()) return { failed: true };
 
   const isMobile = window.matchMedia('(max-width: 900px)').matches;
-  const maxDpr = isMobile ? 1.5 : 2;
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, maxDpr));
+  /* 渲染倍率上限：默认 mobile 1.5 / desktop 2。
+     画质档位（src/quality.js）可以把它压低 —— 这是"画多少像素"，
+     在弱 GPU 上比降几何更立竿见影，而且不改变画面内容。 */
+  const defaultDprCap = () => (isMobile ? 1.5 : 2);
+  let dprCap = null;                                  // null = 用设备默认
+  const applyDpr = () => {
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, dprCap ?? defaultDprCap()));
+  };
+  applyDpr();
   renderer.setClearColor(0x252423, 1);
   renderer.localClippingEnabled = true;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
   const scene = new THREE.Scene();
+
+  /* ------------------------------------------------------- 环境反射（实体感）--
+     曲面要有"环境"可反射，才会出现连续的明暗渐变和一点高光 —— 也就是参考图 1
+     里那种塑料 / 阳极氧化件的实体感。这里不引入任何外部贴图：
+     程序化画一张很小的等距柱状环境（上亮下暗 + 左上主光 + 右上冷补光 + 地面回弹），
+     过一遍 PMREM 当作 scene.environment。灯还是那几盏（负责方向感），
+     环境负责"形体感"。只对 MeshStandard / MeshPhysical 材质生效，
+     罩子的 MeshBasicMaterial 不受影响。桌面端与手机端共用这一套。 */
+  function buildStudioEnv() {
+    const cv = document.createElement('canvas');
+    cv.width = 128;
+    cv.height = 64;
+    const ctx = cv.getContext('2d');
+    const grad = ctx.createLinearGradient(0, 0, 0, 64);
+    grad.addColorStop(0.00, '#e8edf6');
+    grad.addColorStop(0.34, '#8d95a4');
+    grad.addColorStop(0.58, '#3a3f49');
+    grad.addColorStop(1.00, '#0a0b0e');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 128, 64);
+    const blob = (x, y, r, a, rgb = '255,255,255') => {
+      const g = ctx.createRadialGradient(x, y, 1, x, y, r);
+      g.addColorStop(0, `rgba(${rgb},${a})`);
+      g.addColorStop(1, `rgba(${rgb},0)`);
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, 128, 64);
+    };
+    blob(30, 13, 30, 0.95);          // 主光（左上，和 key light 同侧）
+    blob(97, 21, 26, 0.32);          // 冷补光（右上）
+    blob(64, 58, 44, 0.14);          // 地面回弹，给下缘一条反光
+    const tex = new THREE.CanvasTexture(cv);
+    tex.mapping = THREE.EquirectangularReflectionMapping;
+    tex.colorSpace = THREE.SRGBColorSpace;
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    const rt = pmrem.fromEquirectangular(tex);
+    tex.dispose();
+    pmrem.dispose();
+    return rt.texture;
+  }
+  let envMap = null;
+  try {
+    envMap = buildStudioEnv();
+  } catch (e) {
+    /* 环境生成失败也不影响主流程：灯还在，只是少了那层反射 */
+    console.warn('[stage] 环境反射生成失败', e);
+  }
+  /* 注意：**不设 scene.environment**。只要场景级 env 有值，所有 MeshStandard 材质都会采样它，
+     暗色大片像素等于白交一次环境纹理采样。现在改成"材质级"：环境贴图交给 machine，
+     由它决定给哪一段用（展示中的那一段 / 白模章），见 src/machine/index.js 的 fillMatEnv。
+     envIntensity 仍然由画质档位控制（0 = 全部关掉）。 */
+  let envIntensity = 0.55;
 
   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.05, 24);
   camera.zoom = 1;
@@ -107,6 +165,7 @@ export function createStage(canvas) {
     camera.top = halfH;
     camera.bottom = -halfH;
     camera.updateProjectionMatrix();
+    applyDpr();          // 外接屏 / 浏览器缩放会改 devicePixelRatio，这里跟着重算
     renderer.setSize(w, h, false);
   }
   resize();
@@ -170,15 +229,28 @@ export function createStage(canvas) {
   function setAxisOpacity(v) { axis.material.opacity = v; }
   function setDimsOpacity(v) { dims.material.opacity = v; }
 
+  /* 画质档位（src/quality.js 调用）：只动"像素量"和"环境反射强度"，
+     不碰相机、不碰几何 —— 所以降档时画面内容一模一样，只是分辨率与反光弱一点。 */
+  function setQuality(q = {}) {
+    if ('maxDpr' in q) dprCap = q.maxDpr ?? null;
+    if (q.env != null) envIntensity = q.env;
+    applyDpr();
+    resize();
+  }
+
   return {
     failed: false,
     renderer, scene, camera,
     /* 取景参数给 main.js 用：手机端要按包围盒算 zoom / ty */
     viewSize: VIEW_SIZE,
     camY: CAM_Y,
+    /* 环境贴图给 machine 用（材质级）；envIntensity 由画质档位写 */
+    get envMap() { return envMap; },
+    get envIntensity() { return envIntensity; },
     resize, applyCamera, setCameraTarget,
     setBackground,
     setAxisOpacity, setDimsOpacity,
+    setQuality,
     render() { renderer.render(scene, camera); },
   };
 }

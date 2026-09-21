@@ -4,6 +4,8 @@
 
 import { SEGMENTS, SEGMENT_BY_ID, PLATE_CHAPTERS, PLATE_TOUR, TOTAL_STEPS } from './data.js';
 import { createStage } from './stage.js';
+import { createQuality } from './quality.js';
+import { createStats } from './stats.js';
 import { createMachine } from './machine/index.js';
 import { buildUI, applyScene, toggle } from './ui.js';
 import { buildGraph } from './graph.js';
@@ -31,7 +33,7 @@ window.addEventListener('unhandledrejection', (e) => showError(`Promise: ${e.rea
 
 /* 样式版本号（与 styles.css 的 @import ?v= 保持一致）——
    控制台里一眼能看出当前页面拿的是哪一版 CSS，排查"改了没生效"用。 */
-const STYLE_VERSION = '20260920c';
+const STYLE_VERSION = '20260920g';
 console.info(`[ui] styles v${STYLE_VERSION}`);
 
 const params = new URLSearchParams(location.search);
@@ -53,6 +55,10 @@ const ui = buildUI({
 
 const canvas = document.getElementById('gl');
 let stage = { failed: true };
+let quality = null;
+let stats = null;
+let machineRef = null;          // 画质档位要在运行时改机器的环境反射强度
+let envWanted = 0.55;
 if (!forceDoc) {
   try {
     stage = createStage(canvas);
@@ -67,6 +73,19 @@ if (stage.failed || forceDoc) {
   document.getElementById('scroll').style.display = 'none';
   buildDocMode(document.getElementById('docmode'));
 } else {
+  /* 画质档位：弱机自动降档（规则见 src/quality.js）。只调"渲染倍率 + 环境反射强度"，
+     画面内容一模一样，所以好设备上感觉不到；网址加 ?q=high|mid|low|auto 可强制。 */
+  quality = createQuality((q, why) => {
+    stage.setQuality({ maxDpr: q.maxDpr, env: q.env });
+    envWanted = q.env;
+    machineRef?.setEnvIntensity(q.env);          // 档位降下来时，环境反射也跟着关
+    document.body.classList.toggle('q-mid', q.level === 'mid');
+    document.body.classList.toggle('q-low', q.level === 'low');
+    document.documentElement.dataset.quality = q.level;
+    console.info(`[quality] ${q.level}（${why}）· dpr ≤ ${q.maxDpr ?? '设备默认'} · env ${q.env}`);
+  });
+  /* 现场诊断角标：网址加 ?stats=1（客户说"卡"时让他截图这个） */
+  if (params.get('stats') === '1') stats = createStats(stage);
   if (prefersReduced) {
     document.querySelector('.fx--scan').style.display = 'none';
     document.querySelector('.fx--grain').style.display = 'none';
@@ -76,9 +95,36 @@ if (stage.failed || forceDoc) {
 
 /* ------------------------------------------------------------------- run */
 
-function start() {
-  const machine = createMachine();
+/* 等浏览器真的画过一帧（rAF 回调跑在绘制之前，所以等第二帧才等于"已经画上去了"）。
+   写成函数声明是为了提升 —— start() 在模块加载时就被调用，早于下面这些 const。
+   后台标签页里 rAF 不跑，所以兜一层 yieldToBrowser（见 src/yield.js）。 */
+function nextPaint() {
+  return new Promise((resolve) => {
+    let done = false;
+    const fire = () => { if (done) return; done = true; resolve(); };
+    requestAnimationFrame(() => requestAnimationFrame(fire));
+    setTimeout(fire, 150);
+  });
+}
+
+async function start() {
+  /* ---- 首屏延后建几何 ------------------------------------------------
+     开机那一屏（自检行 / SCROLL TO DISASSEMBLE / 四周围栏）全是 HTML+CSS，
+     不需要等模型。而 createMachine() 是同步的重活（建几何 + 生成轮廓线，
+     手机上是几百毫秒到一两秒），放在这里会把它前面的一切都顶住 ——
+     用户就是先看到几秒白屏、然后机器"啪"地出现。
+     所以先把底色刷出来、让浏览器画一帧，再开始建机器。 */
+  stage.render();
+  await nextPaint();
+
+  /* createMachine 现在是 async 的：它把 dress/computeParts 那一段拆成分块执行，
+     中间会让出主线程（见 src/machine/index.js）。 */
+  /* 环境贴图交给 machine（材质级），只给"展示中/白模"的段挂上 —— 见 machine/index.js */
+  const machine = await createMachine({ envMap: stage.envMap, envIntensity: envWanted });
   stage.scene.add(machine.root);
+  machine.prewarmEnv(stage);          // 两套材质各编译一次，免得第一次切章卡一下
+  machineRef = machine;
+  machine.setEnvIntensity(envWanted);
 
   /* 信号链路六个节点灯对齐到**真实路径**上的位置（machine 按线束半径算出来的 t） */
   [...ui.signalNodes.children].forEach((el, i) => {
@@ -107,6 +153,35 @@ function start() {
     acc[s.id] = SCENES.findIndex((sc) => sc.key === 'seg' + s.id);
     return acc;
   }, {});
+
+  /* 手机端：把章节卡从"固定层"搬进各自的章节段落 ——
+     卡片因此跟着滚动上下滑动（滑入 / 滑出），而机器一直留在屏幕中央
+     （canvas 本身是固定的，取景由滚动进度驱动）。
+     桌面端不搬，保持原来的侧栏卡片 + 引线标注。 */
+  const narrowLayout = window.matchMedia('(max-width: 900px)').matches;
+  if (narrowLayout) document.body.classList.add('mobile-cards');
+
+  /* 手机端卡片的节奏：滑入（前 6%）→ 停住（直到 84%，这段是留给你读的）→ 滑走并淡出（后 16%）。
+     全部由**章节进度**驱动，而不是跟着滚动 1:1 —— 所以刷得再快，卡片也会停在原位让你看完；
+     往回滚同样原路返回（上下可逆）。桌面端不走这条分支。
+     另外 motion.js 里手机端把整条时间轴拉长到 1.6 倍（MOBILE_SCROLL_STRETCH），
+     所以这里 0.06→0.84 这段"停住"落到手指上大约是 1300px 的行程，够读完一段。 */
+  const CARD = { in: 0.06, holdEnd: 0.84, out: 0.16, travel: 0.34 };
+  function updateMobileCard(sc, local) {
+    const active = sc.seg ? ui.cards.get(sc.seg) : null;
+    ui.cards.forEach((el) => {
+      if (el === active) return;
+      if (el.style.opacity !== '0') { el.style.opacity = '0'; el.classList.remove('is-on'); }
+    });
+    if (!active) return;
+    if (!active.classList.contains('is-on')) active.classList.add('is-on');
+    const sm = (v) => v * v * (3 - 2 * v);
+    const t1 = sm(Math.min(1, Math.max(0, local / CARD.in)));
+    const t2 = sm(Math.min(1, Math.max(0, (local - CARD.holdEnd) / CARD.out)));
+    const dy = ((1 - t1) - t2) * CARD.travel * window.innerHeight;
+    active.style.transform = `translateY(${dy.toFixed(1)}px)`;
+    active.style.opacity = (t1 * (1 - t2)).toFixed(3);
+  }
   const iXray = SCENES.findIndex((s) => s.key === 'xray');
   const iSignal = SCENES.findIndex((s) => s.key === 'signal');
   const iAssembly = SCENES.findIndex((s) => s.key === 'assembly');
@@ -232,6 +307,7 @@ function start() {
   let assemblyDone = false;
   let lastVig = -1;
   let plateSide = 'right';
+  let lastUiBand = -1;                 // 手机端 UI 带高度（写进 --drawer-px，给步进器定位）
 
   function enterScene(i) {
     const sc = SCENES[i];
@@ -245,7 +321,9 @@ function start() {
       playRailIn(ui.rail);
     }
 
-    if (sc.seg) {
+    if (narrowLayout) {
+      /* 手机端：卡片已经在各自章节里、跟着滚动滑入滑出，这里不再按章切换 */
+    } else if (sc.seg) {
       ui.cards.forEach((el, id) => { if (id !== sc.seg) playCardOut(el); });
       playCardIn(ui.cards.get(sc.seg));
     } else {
@@ -300,7 +378,8 @@ function start() {
   }
 
   function frame(now) {
-    const dt = Math.min(0.05, (now - last) / 1000);
+    const rawDt = (now - last) / 1000;          // 真实帧间隔：画质档位靠它判断
+    const dt = Math.min(0.05, rawDt);
     last = now;
 
     engine.raf(now);
@@ -364,6 +443,11 @@ function start() {
       /* 点了"隐藏说明"之后，UI 带归零 —— 模型立刻长满整屏 */
       const uiHidden = document.body.classList.contains('ui-hidden');
       const uiBand = hasCard ? cardEl.offsetHeight : (bigOverlay && !uiHidden ? H * 0.34 : 0);
+      /* 步进器要正好贴在 UI 带的上沿：把实际高度写进 CSS 变量（≤900px 的 .stepper 用它定位） */
+      if (uiBand !== lastUiBand) {
+        document.documentElement.style.setProperty('--drawer-px', `${Math.round(uiBand)}px`);
+        lastUiBand = uiBand;
+      }
       const bandH = Math.max(200, H - DOCK - uiBand - TOP_PAD);
       const bandFrac = bandH / H;
       const bandCenter = (TOP_PAD + bandH / 2) / H;        // 带子中心在屏幕上的位置（0 = 顶）
@@ -378,6 +462,8 @@ function start() {
       target.ty = (b.centerY - CAM_Y) - (0.5 - bandCenter) * visibleH;
     }
     stage.setCameraTarget(target);
+    /* 手机端卡片节奏（见 updateMobileCard）：滑入 → 停住可读 → 滑走淡出 */
+    if (narrowLayout) updateMobileCard(sc, local);
 
     /* 参考顺序：整体(黑·线稿) → 白模(灰底) → 分解 → 合并 → 白模(灰底) → 整体(黑·线稿) */
     const smooth = local * local * (3 - 2 * local);
@@ -497,6 +583,10 @@ function start() {
       el.classList.toggle('is-on', motion.signalT >= Number(el.dataset.t) - 0.02);
     });
 
+    /* 画质档位：按实测帧时间自动升降（弱机掉到 mid/low，好设备不受影响） */
+    if (quality) quality.sample(rawDt);
+    if (stats) stats.tick(rawDt);
+
     requestAnimationFrame(frame);
   }
 
@@ -516,6 +606,16 @@ function start() {
     if (engine.lenis) engine.lenis.scrollTo(y, { duration: 1.1 });
     else window.scrollTo({ top: y, behavior: prefersReduced ? 'auto' : 'smooth' });
   }
+
+  /* 手机端"±2 步"：手指滑动没办法像滚轮那样一格一格，用这两颗按钮精确推进。
+     桌面端按钮是 display:none（见 styles/overlays.css 与 responsive.css），点了也没有副作用。 */
+  const jumpSteps = (n) => {
+    const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    const y = Math.max(0, Math.min(max, window.scrollY + (n / TOTAL_STEPS) * max));
+    smoothTo(y);
+  };
+  document.getElementById('stepBack')?.addEventListener('click', () => jumpSteps(-2));
+  document.getElementById('stepFwd')?.addEventListener('click', () => jumpSteps(2));
 
   function scrollByViewport(dir) {
     const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);

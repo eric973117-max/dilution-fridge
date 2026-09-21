@@ -19,10 +19,13 @@
 import * as THREE from '../../vendor/three.module.js';
 import { SEGMENTS, SHIELD_LAYERS, PLATE_NOTES, PLATE_COLORS, CHAMBERS } from '../data.js';
 import {
-  EDGE_WHITE, WIRE_WHITE, EDGE_DARK, WIRE_DARK, FILL_LIGHT, FILL_DARK,
+  EDGE_WHITE, WIRE_WHITE, EDGE_DARK, WIRE_DARK, FILL_LIGHT,
+  FILL_SOLID, FILL_PRESENT,
   easeOutBack, smoothstep, cap, clamp01, lerp, R2D,
 } from './palette.js';
 import { SEPARATION } from './separation.js';
+import { EDGE_MIN_TRIS } from './density.js';
+import { yieldToBrowser as nextFrame } from '../yield.js';
 import { BUILDERS } from './builders.js';
 /* 用 cryo-atlas 的 XLD v2 参数化模型（src/atlas/model.js）——
    和 CodeBuddy 里 5173 演示页默认显示的是同一套：
@@ -31,7 +34,11 @@ import { BUILDERS } from './builders.js';
    Cryoperm 磁屏蔽、四级辐射罩（默认隐藏）、真空外壳（默认隐藏）。 */
 import { createCryostat, DEFAULTS, STAGES } from '../atlas/model.js';
 
-export function createMachine() {
+export async function createMachine(options = {}) {
+  /* 环境贴图（stage 建好的 PMREM）改成"材质级"用：
+     只有"展示中的那一段 / 白模章"才挂它，暗色零件不采样（见下面的 fillMatEnv）。 */
+  const envTex = options.envMap ?? null;
+  let envIntensity = options.envIntensity ?? 0.55;
   /* 参数化模型（XLD v2）的输出单位是 mm，整机挂到 root 上时缩放 0.001 变米。
      零件挂进 root 之后，局部坐标仍然是 mm，而分离距离、展开幅度、标注锚点
      这些数字是按「米」写的 —— 写进局部空间时必须乘 LOCAL_PER_M，
@@ -45,6 +52,35 @@ export function createMachine() {
   const segments = new Map();
   const allMaterials = [];
   const segGroups = new Map();
+  /* 灰白实体上的勾线颜色（每帧算一次，别在循环里 new Color） */
+  const presentLine = new THREE.Color();
+  /* 蓝色轮廓线用：用各段自己的强调色往这个饱和蓝上拉一半 ——
+     01 段那种 accent 是白色的，直接用会在灰白底上"隐身"。 */
+  const PRESENT_BLUE = new THREE.Color(0x2f6bff);
+
+  /* -------------------------------------------------- 灰白实体的勾线方案 --
+     灰白那件到底配什么颜色的线，是个反复试的效果问题，所以做成可切换的几档：
+     加 `?lines=ink|soft|slate|cool|amber|blue` 到网址上就能当场比（手机上也行），
+     不带参数时用 `DEFAULT_LINE_MODE`。
+     · edge  = 结构轮廓线（外形、盘边）
+     · wire  = 细节线 / 线缆（细而密的那一层）
+     两档颜色分开，是为了让形体有层次，不至于糊成一片。
+     accent: true 表示"用各段强调色混蓝"，跟着段的身份走。 */
+  const LINE_MODES = {
+    ink:   { edge: 0x14171d, wire: 0x14171d, note: '白模 + 墨线：最接近第 2 张参考图的写法' },
+    soft:  { edge: 0x8f97a5, wire: 0xb6bdc8, note: '很浅的冷灰：几乎只剩明暗，线退到最后' },
+    slate: { edge: 0x39404f, wire: 0x7d8798, note: '冷灰双色调：轮廓深、细节浅，形体分得开' },
+    cool:  { edge: 0x455a86, wire: 0x8aa2cc, note: '低饱和冷蓝：工程图味，不刺眼' },
+    amber: { edge: 0xb35a1f, wire: 0xe08a4a, note: '暖橙：跟站点强调色同一族' },
+    blue:  { edge: null, wire: null, accent: true, note: '各段强调色混蓝（上一版试过的那个）' },
+  };
+  /* 默认用墨线：它和第 2 张参考图（白模 + 细墨线）最贴，缩到手机那么小也读得清。
+     其余几档都是备选，加 `?lines=` 就能当场比（对照图见 docs/verify/lines-modes.png）。 */
+  const DEFAULT_LINE_MODE = 'ink';
+  const lineModeKey = (() => {
+    const q = new URLSearchParams(window.location.search).get('lines');
+    return Object.prototype.hasOwnProperty.call(LINE_MODES, q) ? q : DEFAULT_LINE_MODE;
+  })();
 
   SEGMENTS.forEach((seg) => {
     /* 段先建成空壳 —— 几何等 GLB 载入后填进来 */
@@ -55,20 +91,28 @@ export function createMachine() {
     const edgeMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.92 });
     const wireMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.30 });
     const fillMat = new THREE.MeshStandardMaterial({
-      color: 0x0e0f13, roughness: 0.78, metalness: 0.10, transparent: true, opacity: 1,
+      color: 0x16191f, roughness: 0.46, metalness: 0.22, transparent: true, opacity: 1,
     });
+    /* 同一份底，但带环境贴图 —— 只给"展示中 / 白模"的段用。
+       两者每个参数都同步（见 update 里的赋值），差别只在采样不采样环境。 */
+    const fillMatEnv = fillMat.clone();
+    fillMatEnv.envMap = envTex;
+    fillMatEnv.envMapIntensity = 0.55;
     const glassMats = [];
-    allMaterials.push(edgeMat, wireMat, fillMat, ...glassMats);
+    allMaterials.push(edgeMat, wireMat, fillMat, fillMatEnv, ...glassMats);
     root.add(group);
 
     segments.set(seg.id, {
       data: seg,
       group,
-      edgeMat, wireMat, fillMat, glassMats,
+      edgeMat, wireMat, fillMat, fillMatEnv, glassMats,
+      fillMeshes: [],                        // 用 fillMat 的那批网格（切材质时只动它们）
+      usingEnv: false,                       // 当前挂的是不是"带反射"的那份
       parts: [], anchorPart: null, tint: 0,
       accent: new THREE.Color(seg.accent || '#ffffff'),
       detach: 0,
       opacity: 1,
+      lit: 0,                                // 1 = "正在讲的那一段"（灰白实体 + 深勾线）
       shellLines: [],                       // 03 段罩子的轮廓线（和实体共用一套层序）
       target: { opacity: 1, detach: 0 },
     });
@@ -99,11 +143,16 @@ export function createMachine() {
         m.material = gm;
       } else {
         m.material = s.fillMat;
+        s.fillMeshes.push(m);
       }
       const g = m.geometry;
       if (!g || !g.attributes.position) return;
       const tris = (g.index ? g.index.count : g.attributes.position.count) / 3;
-      if (tris > 24000 && !shell) return;          // 太密的网格不生成轮廓线（罩子除外：它靠线认层）
+      /* 轮廓线预算（见 density.js）：
+         · 太密的网格（>24000 面）不画线；
+         · 太小的零件（< EDGE_MIN_TRIS）也不画线 —— 手机上它们只有几个像素，
+           线看不清，但每个线段对象都是一次 draw call。罩子例外：它靠线认层。 */
+      if (!shell && (tris > 24000 || tris < EDGE_MIN_TRIS)) return;
       let eg = edgeCache.get(g.uuid);
       if (!eg) {
         eg = new THREE.EdgesGeometry(g, 24);
@@ -291,27 +340,72 @@ export function createMachine() {
       const o = s.opacity;
       s.fillMat.depthWrite = o > 0.5;
 
-      /* 渲染模式：clay = 1 是白模（亮实体 + 深色轮廓），0 是黑白线稿 */
+      /* 渲染模式：
+         · clay = 1 → 白模章（总览 / 合体）：亮实体 + 深色轮廓，老行为不变；
+         · lit  = 1 → "正在讲的那一段"：灰白实体 + 深色勾线（参考图 2 的白模语言），
+           用它和其余暗实体（参考图 1 那种有环境反射的实体感）分清楚。 */
       const clay = claySmooth;
+      const litTarget = (motion.focus !== null && focused) ? 1 : 0;
+      s.lit = lerp(s.lit, litTarget, Math.min(1, dt * 3.5));
+      const lit = s.lit;
+      const bright = Math.max(clay, lit);        // 1 = 亮实体（白模或"展示中"）
       const tintTarget = (motion.focus !== null && focused) ? 1 : 0;
       s.tint = lerp(s.tint, tintTarget, Math.min(1, dt * 3.5));
 
       s.edgeMat.color.copy(EDGE_DARK).lerp(EDGE_WHITE, 1 - clay);
       s.wireMat.color.copy(WIRE_DARK).lerp(WIRE_WHITE, 1 - clay);
-      if (s.tint > 0.001) {
-        s.edgeMat.color.lerp(s.accent, s.tint * 0.8 * (1 - clay));
-        s.wireMat.color.lerp(s.accent, s.tint * 1.0 * (1 - clay * 0.75));
+      /* 灰白实体上的勾线：按 LINE_MODES 里选中的那一档上色
+         （网址参数 `?lines=` 可切，见上面那张表） */
+      if (lit > 0.001) {
+        const mode = LINE_MODES[lineModeKey];
+        if (mode.accent) {
+          /* 各段强调色往饱和蓝拉一半：01 段 accent 是白的，直接用在灰白底上会隐身 */
+          presentLine.copy(s.accent).lerp(PRESENT_BLUE, 0.5);
+        } else {
+          presentLine.setHex(mode.edge);
+        }
+        s.edgeMat.color.lerp(presentLine, lit);
+        if (mode.accent) presentLine.copy(s.accent).lerp(PRESENT_BLUE, 0.5);
+        else presentLine.setHex(mode.wire);
+        s.wireMat.color.lerp(presentLine, lit * 0.92);
       }
-      s.fillMat.color.copy(FILL_LIGHT).lerp(FILL_DARK, 1 - clay);
-      s.fillMat.roughness = 0.52 + 0.26 * (1 - clay);
-      s.fillMat.metalness = 0.04 + 0.06 * (1 - clay);
+      if (s.tint > 0.001) {
+        const t = s.tint * (1 - lit);            // 白模上不再叠强调色，免得脏
+        s.edgeMat.color.lerp(s.accent, t * 0.8 * (1 - clay));
+        s.wireMat.color.lerp(s.accent, t * 1.0 * (1 - clay * 0.75));
+      }
+      /* 实体底：暗实体（低粗糙度 + 一点金属度，靠环境反射把形体读出来）
+         ↔ 亮实体（哑光灰白），两者之间连续过渡 */
+      s.fillMat.color.copy(FILL_SOLID).lerp(FILL_PRESENT, lit).lerp(FILL_LIGHT, clay);
+      s.fillMat.roughness = 0.46 + 0.06 * clay + 0.16 * lit;
+      s.fillMat.metalness = 0.22 * (1 - bright) + 0.03 * bright;
       s.fillMat.opacity = o * (1 - 0.10 * clay);
 
-      s.edgeMat.opacity = (0.92 - 0.28 * clay) * o;
+      /* ---- 环境反射只给"亮实体"那一份 --------------------------------------
+         两份材质除 envMap 外每个参数都一样，每帧同步；只有需要反射的那一段
+         才把网格切到 fillMatEnv 上。
+         · 白模吃得多一点 → 上亮下暗的渐变就是它的"阴影"；
+         · 暗实体那一大片像素不采样环境（`scene.environment` 全程为 null），
+           这是弱机上实打实省下来的每像素成本。 */
+      s.fillMatEnv.color.copy(s.fillMat.color);
+      s.fillMatEnv.roughness = s.fillMat.roughness;
+      s.fillMatEnv.metalness = s.fillMat.metalness;
+      s.fillMatEnv.opacity = s.fillMat.opacity;
+      s.fillMatEnv.envMapIntensity = envIntensity * (1.4 + 1.4 * bright);
+      const wantEnv = envTex != null && envIntensity > 0.001 && bright > 0.5;
+      if (wantEnv !== s.usingEnv) {
+        s.usingEnv = wantEnv;
+        const m2 = wantEnv ? s.fillMatEnv : s.fillMat;
+        s.fillMeshes.forEach((mesh) => { mesh.material = m2; });
+      }
+
+      /* 展示中的那一段是灰白底，勾线要压得更实一点才读得出来（参考图 2 的线稿） */
+      s.edgeMat.opacity = Math.min(1, (0.92 - 0.28 * clay + 0.08 * lit)) * o;
       /* 套罩时把 03 段的轮廓线提亮一档：罩子是半透明的，
          靠轮廓才看得出"套到了第几层"（见 motion.shieldGlow）。 */
       const wireBoost = (id === '03' && (motion.shieldGlow ?? 1) > 1) ? 2.4 : 1;
-      s.wireMat.opacity = Math.min(1, (0.30 + 0.16 * s.tint) * o * (1 - 0.30 * clay) * wireBoost);
+      /* 展示中的那一段：内部线缆（细线）也要看得见，所以提亮一档 */
+      s.wireMat.opacity = Math.min(1, (0.30 + 0.16 * s.tint) * o * (1 - 0.30 * clay) * (1 + 1.0 * lit) * wireBoost);
       s.glassMats.forEach((gm) => {
         /* 逐层套罩：每层罩子按自己的 layerAt 错开淡入（motion.shieldReveal 是 null 时整层直接可见） */
         const at = gm.userData.layerAt;
@@ -390,7 +484,14 @@ export function createMachine() {
     wiring: '05', readout: '07', chip: '08', magnetic: '08', services: '08',
   };
 
-  const cryo = createCryostat(CRYO_PARAMS);
+  /* 分块计时：`?stats=1` 之外也用不着一堆 profile，直接记在返回对象上 */
+  const buildMs = {};
+  let tMark = performance.now();
+  const mark = (k) => { buildMs[k] = Math.round(performance.now() - tMark); tMark = performance.now(); };
+  /* createCryostat 也是 async 的：里面按"线缆树 / 偏置线 / 氦循环 / 读出链 / 罩子 / 合批"
+     切成了 6 块，每块之间让出一次主线程（见 src/atlas/model.js 的 nextFrame 注释）。 */
+  const cryo = await createCryostat(CRYO_PARAMS);
+  mark('cryostat');
   /* 「悬挂框架」（吊到天花板的铝型材）是照片外补的展示件，继续隐藏。
      真空外罩与四级辐射罩则要留下 —— 它们正是 03 段（真空与辐射屏蔽段）的全部零件，
      结尾还要按层套上去，见下面的 shieldParts / SHIELD_LAYERS。 */
@@ -453,7 +554,18 @@ export function createMachine() {
   /* 零件搬进来时已经按世界变换落位；参数化模型本身就在真实坐标上，
      这里不再按包围盒中心挪机器 —— 一挪就出画。 */
   root.updateMatrixWorld(true);
-  segments.forEach((s) => { dress(s); computeParts(s); });
+  /* ---- 分块构建（对手机意义最大的一段）----------------------------------
+     dress() 要给每个零件生成一份 EdgesGeometry，computeParts() 要算包围盒，
+     这些是同步重活：整段跑完，手机上要好几秒，期间页面完全僵住 —— 滚动、
+     按钮、甚至 CSS 动画都停摆。这里改成"一段一段来"，每段之间让出一次主线程，
+     浏览器就能插空绘制、提前响应输入。总时长几乎不变，但不再"一冻到底"。
+     （cryostat 那一大块仍然是一次性的 —— 它在 src/atlas/model.js 里，是另一个话题。） */
+  for (const s of segments.values()) {
+    dress(s);
+    computeParts(s);
+    await nextFrame();
+  }
+  mark('dressParts');
 
   /* 没有零件的段（06 超导传输段在这一版模型里没有独立几何）：
      说明锚点退回到"整机里离它最近的那个零件" —— 宁可指到真实存在的线束，
@@ -691,16 +803,49 @@ export function createMachine() {
     return best / (signalPath.length - 1);
   });
 
+  mark('rest');
+
+  /* 画质档位改环境反射强度：0 就整体不用反射材质（弱机 low 档） */
+  function setEnvIntensity(v) {
+    envIntensity = Math.max(0, Number(v) || 0);
+    if (envIntensity <= 0.001) {
+      segments.forEach((s) => {
+        if (!s.usingEnv) return;
+        s.usingEnv = false;
+        s.fillMeshes.forEach((mesh) => { mesh.material = s.fillMat; });
+      });
+    }
+  }
+
+  /* 预编译两套材质（有反射 / 无反射）：否则第一次切章时会现编译着色器，卡一下。
+     把两套各渲一遍，图个"第一次切换无感"。 */
+  function prewarmEnv(stage) {
+    if (!envTex || !stage?.renderer) return;
+    const setAll = (useEnv) => {
+      segments.forEach((s) => {
+        s.usingEnv = useEnv;
+        const mesh2 = useEnv ? s.fillMatEnv : s.fillMat;
+        s.fillMeshes.forEach((mesh) => { mesh.material = mesh2; });
+      });
+    };
+    setAll(true); stage.renderer.compile(stage.scene, stage.camera);
+    setAll(false); stage.renderer.compile(stage.scene, stage.camera);
+  }
+
   console.info('[cryo] 参数化模型分段完成', {
     parts: moved,
     stats: cryo.stats,
     counts: [...segments].map(([id, s]) => `${id}:${s.group.children.length}`).join(' '),
+    buildMs,
   });
 
   return {
     root,
     segments,
     update,
+    buildMs,
+    setEnvIntensity,
+    prewarmEnv,
     signalCurve,
     /* 六个节点在这条曲线上的位置（0…1），HUD 的节点灯用它对齐 */
     signalNodeT,

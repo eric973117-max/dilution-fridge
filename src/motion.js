@@ -10,6 +10,15 @@ import { splitIn, scrambleIn } from './fx.js';
 
 const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
+/* 手机端「时间轴拉长」系数（只在 ≤900px 生效，宽屏恒为 1）。
+   手指滑动是位移输入：一划就是两三百像素，按原来的行程走，一章的卡片
+   只停住 ~720px 的手指数就划走了 —— 文字根本来不及读。
+   把每一章的滚动行程拉长到 1.6 倍，同样的手指数只推进约六成章节，
+   卡片「停住可读」那一段也跟着变长；桌面端一点不受影响。 */
+const MOBILE_SCROLL_STRETCH = 1.6;
+const scrollStretch = () =>
+  (window.matchMedia('(max-width: 900px)').matches ? MOBILE_SCROLL_STRETCH : 1);
+
 /* -------------------------------------------------------------- 场景表 --- */
 
 export const SCENES = [
@@ -54,7 +63,19 @@ export function createScrollEngine({ reduced = false } = {}) {
 
   let lenis = null;
   if (!reduced) {
-    lenis = new Lenis({ duration: 1.05, smoothWheel: true, wheelMultiplier: 1, touchMultiplier: 1.6 });
+    /* 触屏和鼠标滚轮是两种不同精度的输入：
+       · 鼠标滚轮一格一格，1.6 倍放大仍然可控；
+       · 手指滑动是位移输入，放大 1.6 倍 + 惯性会让"翻页"完全没法对位。
+       所以窄屏（手机）改成 1:1 跟手 —— syncTouch 让页面直接跟随手指位移，
+       松手不再甩出去；宽屏保持原来的手感和参数不变。 */
+    const narrow = window.matchMedia('(max-width: 900px)').matches;
+    lenis = new Lenis({
+      duration: narrow ? 0.9 : 1.05,
+      smoothWheel: true,
+      wheelMultiplier: 1,
+      touchMultiplier: narrow ? 1 : 1.6,
+      ...(narrow ? { syncTouch: true, syncTouchLerp: 0.08 } : {}),
+    });
   }
 
   let ranges = [];
@@ -62,12 +83,13 @@ export function createScrollEngine({ reduced = false } = {}) {
 
   function measure() {
     const vh = window.innerHeight;
-    sections.forEach((s) => { s.el.style.height = `${(s.vh * vh) / 100}px`; });
+    const k = scrollStretch();
+    sections.forEach((s) => { s.el.style.height = `${(s.vh * k * vh) / 100}px`; });
     ranges = [];
     metrics = [];
     let acc = 0;
     sections.forEach((s) => {
-      const h = (s.vh * vh) / 100;
+      const h = (s.vh * k * vh) / 100;
       ranges.push({ start: acc, end: acc + h, height: h });
       metrics.push({ top: acc, height: h });
       acc += h;

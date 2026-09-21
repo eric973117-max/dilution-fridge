@@ -1,0 +1,31 @@
+/* ==========================================================================
+   quality · 画质降级（由 src/quality.js 自动切换，或用 ?q=mid|low 强制）
+
+   原则：**先砍装饰，不砍内容**。
+   · 颗粒（grain）与扫描线（scan）是两层全屏叠加，纯装饰；
+   · backdrop-filter（毛玻璃）在 iOS 上出了名的贵，尤其是手机端那张
+     占了大半屏的章节抽屉 —— 它的背景本来就是透明的，只为了给文字垫一层模糊。
+   这两样在最弱的机器上先去掉，画面几乎看不出差别，帧率却能明显上来。
+   ========================================================================== */
+
+/* mid：去掉颗粒 + 扫描线，抽屉与小控件不再做毛玻璃 */
+body.q-mid .fx--grain,
+body.q-mid .fx--scan { display: none; }
+
+body.q-mid .card,
+body.q-mid .stepper button,
+body.q-mid .ui-toggle,
+body.q-low .card,
+body.q-low .stepper button,
+body.q-low .ui-toggle {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* low：四层装饰全去掉（网格 / 扫描 / 颗粒 / 渐晕），毛玻璃一律去掉 */
+body.q-low .fx { display: none; }
+
+body.q-low * {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}

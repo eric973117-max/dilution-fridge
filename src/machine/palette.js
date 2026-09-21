@@ -15,6 +15,18 @@ export const WIRE_DARK = new THREE.Color(0x33406a);
 export const FILL_LIGHT = new THREE.Color(0xeef3fa);
 export const FILL_DARK = new THREE.Color(0x0e0f13);
 
+/* 实体渲染（"有环境可反射"的两种底）：
+   · FILL_SOLID —— 默认的暗实体：比 FILL_DARK 稍亮一点，配合环境反射与低粗糙度，
+     曲面上会有一条连续的明暗渐变 + 一点高光，看着像真的阳极氧化件 / 塑料件，
+     而不是一块平涂的黑。参考图 1 的"实体感"。
+   · FILL_PRESENT —— 正在被讲的那一段：灰白实体（参考图 2 的白模语言）。
+   · EDGE_INK —— 灰白实体上的勾线备选：近黑的墨色（"白模 + 墨线"那一版用的）。
+     当前用的是**蓝色轮廓线**（见 `src/machine/index.js` 的 `PRESENT_BLUE`），
+     要换回墨线就把那里的 lerp 目标换回 EDGE_INK。 */
+export const FILL_SOLID = new THREE.Color(0x16191f);
+export const FILL_PRESENT = new THREE.Color(0xd4d9e2);
+export const EDGE_INK = new THREE.Color(0x14171d);
+
 /** 机械翻转的回弹曲线：冲过头再收回来 */
 export function easeOutBack(d, c1 = 1.9) {
   const c3 = c1 + 1;

@@ -9,12 +9,13 @@
 
 /* 改动样式后把版本号 +1（或换成日期）—— 浏览器会当成新 URL 重新取，
    避免"明明改了、刷新还是旧样式"这类缓存问题。 */
-@import url('./styles/tokens.css?v=20260920c');
-@import url('./styles/fx.css?v=20260920c');
-@import url('./styles/hud.css?v=20260920c');
-@import url('./styles/panels.css?v=20260920c');
-@import url('./styles/cards.css?v=20260920c');
-@import url('./styles/overlays.css?v=20260920c');
-@import url('./styles/docmode.css?v=20260920c');
-@import url('./styles/responsive.css?v=20260920c');
-@import url('./styles/scene.css?v=20260920c');
+@import url('./styles/tokens.css?v=20260920g');
+@import url('./styles/fx.css?v=20260920g');
+@import url('./styles/hud.css?v=20260920g');
+@import url('./styles/panels.css?v=20260920g');
+@import url('./styles/cards.css?v=20260920g');
+@import url('./styles/overlays.css?v=20260920g');
+@import url('./styles/docmode.css?v=20260920g');
+@import url('./styles/responsive.css?v=20260920g');
+@import url('./styles/scene.css?v=20260920g');
+@import url('./styles/quality.css?v=20260920g');

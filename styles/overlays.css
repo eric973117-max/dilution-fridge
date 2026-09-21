@@ -210,6 +210,9 @@
 /* "隐藏说明"按钮：只在窄屏 + 最后两章出现（样式在 responsive.css） */
 .ui-toggle { display: none; }
 
+/* "±2 步"步进器：只在窄屏出现（样式在 responsive.css） */
+.stepper { display: none; }
+
 .overlay--shields { display: grid; place-items: center end; padding-right: 56px; }
 
 .shields-hud { text-align: right; }

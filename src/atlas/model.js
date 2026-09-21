@@ -2,6 +2,9 @@ import * as THREE from '../../vendor/three.module.js';
 import { buildChipPackage } from './chip-package.js';
 import { EVIDENCE, LOS_SECTORS, PULSE_SECTORS, PLATE_DIAMETERS, PLATE_Y, cableBanks, cableType, cablePoint, attenuation } from './xld.js';
 import { mergeGeometries } from '../../vendor/BufferGeometryUtils.js';
+import { seg } from '../machine/density.js';
+/* 让出一次主线程（分块建模用）：按标签页可见性自动选 rAF / MessageChannel，见 src/yield.js */
+import { yieldToBrowser as nextFrame } from '../yield.js';
 
 export const DEFAULTS = Object.freeze({ diameter: 700, spacing: 220, channels: 65, supports: 8, qubits: 36 });
 export const SOURCES = [
@@ -39,7 +42,7 @@ export function normalizeParams(input = {}) {
   return { diameter: finite('diameter', 650, 800, 10), spacing: finite('spacing', 190, 310, 5), channels: option('channels', [24, 48, 65, 72]), supports: option('supports', [6, 8]), qubits: option('qubits', [16, 36, 64]) };
 }
 
-export function createCryostat(input = {}) {
+export async function createCryostat(input = {}) {
   const params = normalizeParams(input);
   const root = new THREE.Group();
   root.name = 'DR-01_Parametric_Dilution_Refrigerator';
@@ -108,17 +111,18 @@ export function createCryostat(input = {}) {
     return m;
   }
   function cyl(parent, radius, height, pos, mat = 'white', segments = 24, kind = '圆柱件', rotation) {
-    return add(parent, geometry(`c:${radius}:${height}:${segments}`, () => new THREE.CylinderGeometry(radius, radius, height, segments)), mat, pos, kind, rotation);
+    const s = seg(segments);
+    return add(parent, geometry(`c:${radius}:${height}:${s}`, () => new THREE.CylinderGeometry(radius, radius, height, s)), mat, pos, kind, rotation);
   }
   function box(parent, size, pos, mat = 'white', kind = '壳体') {
     return add(parent, geometry(`b:${size.join(':')}`, () => new THREE.BoxGeometry(...size)), mat, pos, kind);
   }
   function ring(parent, radius, tube, pos, mat = 'silver', rotation = [Math.PI / 2, 0, 0], kind = '密封环') {
-    return add(parent, geometry(`t:${radius}:${tube}`, () => new THREE.TorusGeometry(radius, tube, 6, 80)), mat, pos, kind, rotation);
+    return add(parent, geometry(`t:${radius}:${tube}`, () => new THREE.TorusGeometry(radius, tube, seg(6, 3), seg(80, 10))), mat, pos, kind, rotation);
   }
   function pipe(parent, points, radius = 1.15, mat = 'bright', kind = '管线', segments = 20) {
     const curve = new THREE.CatmullRomCurve3(points.map(p => new THREE.Vector3(...p)), false, 'centripetal');
-    return add(parent, new THREE.TubeGeometry(curve, segments, radius, 5, false), mat, [0, 0, 0], kind);
+    return add(parent, new THREE.TubeGeometry(curve, seg(segments), radius, seg(5, 3), false), mat, [0, 0, 0], kind);
   }
   function rod(parent, a, b, radius = 4, mat = 'silver', kind = '支撑杆') {
     const start = new THREE.Vector3(...a), end = new THREE.Vector3(...b), delta = end.clone().sub(start);
@@ -355,6 +359,8 @@ export function createCryostat(input = {}) {
   mechanical.rfPorts = rfPorts;
   mechanical.cableBanks = banks;
   mechanical.dcLooms = { roomTo4K: 4, below4K: 2, twistedPairsPerLoom: 12, materials: ['Cu AWG35', 'PhBr AWG36', 'NbTi'] };
+  await nextFrame();                       // 分块①：65 路 RF 线缆树建完，让出一次主线程
+
   for (let i = 0; i < 6; i++) {
     const dc = group(stageGroups[i], 'wiring', `DC_thermometry_bias_${i}`);
     for (let b = 0; b < (i < 3 ? 4 : 2); b++) {
@@ -374,6 +380,8 @@ export function createCryostat(input = {}) {
     }
   }
 
+
+  await nextFrame();                       // 分块②：偏置测温线束建完
 
   const heliumTop = group(top, 'helium', 'Room_helium_manifold');
   cyl(heliumTop, 26, 12, [0, 13.5, 0], 'silver', 40, '抽气管真空密封法兰');
@@ -420,6 +428,8 @@ export function createCryostat(input = {}) {
       mechanical.contacts.push({ kind: 'mixing-chamber', lowerMM: 4, lowerPlateMM: 4, x: 0, z: 0 });
     }
   }
+
+  await nextFrame();                       // 分块③：氦循环 / 蒸馏室 / 混合室建完
 
   const [readX, readZ] = portPoint(7, 12);
   const readGroups = [2, 3, 4, 5].map(i => group(stageGroups[i], 'readout', `Four_channel_readout_${i}`));
@@ -473,6 +483,8 @@ export function createCryostat(input = {}) {
   mechanical.readout = { hemt: 4, circulators: 4, twpa: 4, isolatorArrays: 2, bandpass: 4, couplers: 4, mountingSheetMM: 2 };
 
 
+  await nextFrame();                       // 分块④：四通道读出链建完
+
   buildChipPackage({ stage: stageGroups[5], params, group, box, cyl, pipe, rod, chipPieces, mechanical });
   const sampleWires = group(stageGroups[5], 'wiring', 'Sample_input_connections');
   for (let j = 0; j < 4; j++) {
@@ -512,6 +524,8 @@ export function createCryostat(input = {}) {
   }
   for (const x of [-60, 60]) pipe(services, [[x, 147, 0], [x, 221, -10], [230, 245, -90], [290, 360, -90]], 3.5, 'silver', '气体循环外接软管（接口示意）', 30);
 
+  await nextFrame();                       // 分块⑤：芯片封装 / 各级屏蔽罩 / 室温气体处理车建完
+
   function optimize(g) {
     for (const child of [...g.children]) if (child.isGroup) optimize(child);
     const buckets = new Map();
@@ -535,6 +549,7 @@ export function createCryostat(input = {}) {
       items.forEach(item => g.remove(item));
     }
   }
+  await nextFrame();                       // 分块⑥：合批（optimize）本身也是一次重活，单独一段
   optimize(root);
   const used = new Set();
   root.traverse(o => { if (o.geometry) used.add(o.geometry); });
