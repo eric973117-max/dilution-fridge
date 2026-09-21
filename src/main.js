@@ -33,7 +33,7 @@ window.addEventListener('unhandledrejection', (e) => showError(`Promise: ${e.rea
 
 /* 样式版本号（与 styles.css 的 @import ?v= 保持一致）——
    控制台里一眼能看出当前页面拿的是哪一版 CSS，排查"改了没生效"用。 */
-const STYLE_VERSION = '20260920i';
+const STYLE_VERSION = '20260920j';
 console.info(`[ui] styles v${STYLE_VERSION}`);
 
 const params = new URLSearchParams(location.search);
@@ -428,7 +428,7 @@ async function start() {
     if (window.innerWidth <= 900) {
       const CAM_Y = stage.camY;
       const H = window.innerHeight;
-      const DOCK = 92;                                     // 段位条 + 页脚（与 responsive.css 对齐）
+      const DOCK = 132;                                    // 页脚 + 段位条 + 步数滑轨（与 responsive.css 的 --dock-h 对齐）
       const TOP_PAD = 62;                                  // 顶部参数条让出的高度
       const cardEl = sc.seg ? ui.cards.get(sc.seg) : null;
       const hasCard = !!(cardEl && cardEl.classList.contains('is-on'));

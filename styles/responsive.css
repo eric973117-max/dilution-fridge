@@ -18,7 +18,9 @@
      抽屉固定在底部（44px 段位条 + 页脚之上），把手可点收起 / 展开。
      机位的竖屏偏移在 src/main.js 里（ty 上移 + zoom 收一档）。
      ========================================================================== */
-  :root { --pad-x: 16px; --rail-w: 0px; --drawer-h: 34vh; --dock-h: 92px; }
+  /* --dock-h = 屏幕底部那一条"固定带"的总高：页脚 + 段位条 + **步数滑轨**。
+     滑轨原来挂在卡片上方（卡片一展开就被顶到屏幕中间，很碍眼），现在并进这条带子里。 */
+  :root { --pad-x: 16px; --rail-w: 0px; --drawer-h: 34vh; --dock-h: 132px; }
 
   /* ---- 顶部：参数面板压到三行 ---- */
   .hud--tl { top: 42px; }      /* 让开右上角那颗"跳过动画"按钮 */
@@ -271,7 +273,8 @@
     left: 12px;
     right: 12px;
     z-index: 14;
-    bottom: calc(var(--dock-h) + var(--drawer-px, 34vh) + 12px);
+    /* 贴在段位条上方（在 --dock-h 这条固定带里），不再跟着卡片高度跑 */
+    bottom: calc(var(--dock-h) - 40px);
     height: 24px;
     margin: 0;
     padding: 0;
